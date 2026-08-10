@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0A0D12">
 <title>Get Rich or Go Broke</title>
+<!-- SDK oficial do Supabase (necessário para conta e sincronização online). Carregado via CDN pois o jogo é um arquivo único estático. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 /* ============================================================
    GET RICH OR GO BROKE — design tokens
@@ -278,6 +280,14 @@ button{ font-family:inherit; }
 .mode-card .mc-name{ font-size:12px; font-weight:700; color:var(--text); }
 .mode-card .mc-desc{ font-size:10px; color:var(--text-faint); line-height:1.35; }
 .app-version{ position:fixed; right:10px; bottom:calc(10px + env(safe-area-inset-bottom,0px)); font-size:10px; color:var(--text-faint); opacity:.55; letter-spacing:.4px; z-index:5; pointer-events:none; }
+
+/* ---------- Conta online (autenticação e sincronização) ---------- */
+.account-bar{ width:100%; margin-top:14px; }
+.account-bar-connected{ display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--surface); border:1px solid var(--gold); border-radius:var(--radius-sm); padding:10px 14px; }
+.account-bar-connected .nick{ font-weight:700; color:var(--gold); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.auth-field{ width:100%; margin-bottom:8px; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-size:14px; }
+.auth-tabs{ display:flex; gap:8px; margin:10px 0 14px; }
+.auth-tabs .btn.active-tab{ border-color:var(--gold); color:var(--gold); }
 .daily-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
 .daily-grid .ach-card{ padding:10px 6px; }
 .progress-track{ height:6px; background:var(--border-soft); border-radius:4px; overflow:hidden; margin-top:8px; }
@@ -303,6 +313,28 @@ button{ font-family:inherit; }
 .coll-card .ad{ font-family:var(--mono); }
 .coll-count{ position:absolute; top:8px; right:10px; font-size:10px; font-weight:800; color:var(--text-dim); }
 .coll-summary{ text-align:center; font-size:12.5px; color:var(--text-dim); margin:2px 0 14px; }
+
+/* ---------- V1.8-B — Trocas ---------- */
+.trade-item-card{ display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; }
+.trade-item-card .ti-icon{ font-size:28px; }
+.trade-item-card .ti-info .ti-name{ font-weight:800; font-size:14px; }
+.trade-item-card .ti-info .ti-meta{ font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:2px; }
+.trade-arrow{ text-align:center; font-size:18px; color:var(--text-faint); margin:6px 0; }
+.trade-picker-item{ cursor:pointer; }
+
+/* ---------- V1.9 — Mercado ---------- */
+.grb-balance{ display:flex; align-items:center; justify-content:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:14px; font-family:var(--mono); font-size:16px; font-weight:800; color:var(--gold); }
+.market-tabs{ display:flex; gap:6px; margin-bottom:14px; }
+.market-tab{ flex:1; text-align:center; padding:9px 4px; border-radius:10px; font-size:11.5px; font-weight:700; background:var(--surface); border:1px solid var(--border); color:var(--text-dim); cursor:pointer; }
+.market-tab.active{ background:rgba(232,184,75,.12); border-color:var(--gold); color:var(--gold); }
+.market-listing{ display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-bottom:10px; }
+.market-listing .ml-icon{ font-size:26px; }
+.market-listing .ml-info{ flex:1; }
+.market-listing .ml-name{ font-weight:800; font-size:13.5px; }
+.market-listing .ml-meta{ font-family:var(--mono); font-size:10.5px; color:var(--text-dim); margin-top:2px; }
+.market-listing .ml-price{ font-family:var(--mono); font-weight:800; color:var(--gold); font-size:13px; margin-top:4px; }
+.market-empty{ text-align:center; color:var(--text-dim); font-size:13px; padding:30px 10px; }
+.grb-input{ width:100%; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:12px; color:var(--text); font-family:var(--mono); font-size:16px; text-align:center; }
 </style>
 </head>
 <body>
@@ -313,6 +345,9 @@ button{ font-family:inherit; }
     <div class="splash-emoji">💰</div>
     <div class="brand-title i18n">Get Rich</div>
     <div class="brand-sub i18n">or go broke</div>
+
+    <div class="account-bar" id="account-bar"></div>
+
     <div class="splash-buttons">
       <button class="btn btn-primary i18n" onclick="startNewGame()">▶️ JOGAR</button>
       <button class="btn btn-secondary i18n" id="btn-continue" onclick="continueGame()">⏯️ CONTINUAR</button>
@@ -351,6 +386,7 @@ button{ font-family:inherit; }
     <div class="splash-buttons" style="margin-top:16px;">
       <button class="btn btn-outline i18n" onclick="goToDuelScreen()">⚔️ DESAFIO 1V1</button>
       <button class="btn btn-outline i18n" onclick="openCollectionScreen()">💎 COLEÇÃO</button>
+      <button class="btn btn-outline i18n" onclick="openMarketScreen()">🏪 MERCADO</button>
       <button class="btn btn-outline i18n" onclick="openRecordsScreen()">🏆 RECORDES</button>
       <button class="btn btn-outline i18n" onclick="openAchievementsScreen()">🎖️ CONQUISTAS</button>
       <button class="btn btn-ghost i18n" onclick="openSettingsScreen()">⚙️ CONFIGURAÇÕES</button>
@@ -358,7 +394,7 @@ button{ font-family:inherit; }
     <div class="splash-tagline i18n">Transforme $100 em $1.000.000. Ou vá à falência tentando.</div>
   </div>
 
-  <div class="app-version">v1.8</div>
+  <div class="app-version">v1.10-A2</div>
 
   <!-- ============ NOME DO JOGADOR ============ -->
   <div id="screen-name" class="screen">
@@ -498,57 +534,37 @@ button{ font-family:inherit; }
   <div id="screen-collection" class="screen">
     <div class="screen-header"><div class="back-btn" onclick="backFromSubscreen()">◀</div><h1 class="i18n">💎 Coleção</h1></div>
     <div class="coll-summary" id="collection-summary"></div>
-    <button class="btn btn-outline i18n" style="margin-bottom:12px;" onclick="openTradeScreen()">🔄 TROCAR ITENS</button>
+    <div style="display:flex; justify-content:center; margin-bottom:14px;">
+      <button class="btn btn-outline btn-sm i18n" onclick="openTradeScreen()">🔁 TROCAR</button>
+    </div>
     <div class="ach-grid" id="collection-grid"></div>
   </div>
 
   <!-- ============ TROCAS (V1.8-B) ============ -->
   <div id="screen-trade" class="screen">
     <div class="game-header">
-      <div class="header-icon-btn" onclick="backFromSubscreen()">◀</div>
-      <div class="header-title i18n">🔄 TROCAR ITENS</div>
+      <div class="header-icon-btn" onclick="openCollectionScreen()">◀</div>
+      <div class="header-title i18n">🔁 TROCAR ITENS</div>
       <div class="header-icon-btn" style="visibility:hidden;">🔊</div>
     </div>
-    <p class="modal-sub i18n" style="text-align:center; padding:10px 10px 0;">Troque itens da coleção com outro jogador usando códigos. Sem internet — só compartilhe o código.</p>
-
-    <div class="progress-section" id="trade-create-block">
-      <div class="progress-section-title i18n">🆕 Criar troca</div>
-      <div id="trade-create-idle">
-        <button class="btn btn-primary i18n" onclick="openTradeItemPicker('create')">🎴 ESCOLHER ITEM PARA OFERECER</button>
-      </div>
-      <div id="trade-create-active" style="display:none;">
-        <div id="trade-create-offer-line"></div>
-        <div class="duel-code-box" id="trade-create-code"></div>
-        <button class="btn btn-outline i18n" onclick="copyDuelCode('trade-create-code')">📋 COPIAR CÓDIGO</button>
-        <textarea id="trade-create-response-input" class="i18n" placeholder="Cole aqui o código de resposta" style="width:100%; min-height:56px; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:var(--mono); font-size:12px; resize:vertical; margin-top:10px;"></textarea>
-        <div id="trade-create-preview" style="display:none; margin:10px 0;"></div>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
-          <button class="btn btn-secondary i18n" onclick="previewTradeResponse()">🔍 VER RESPOSTA</button>
-          <button class="btn btn-primary i18n" id="trade-create-confirm-btn" style="display:none;" onclick="confirmTradeAsCreator()">✅ CONFIRMAR TROCA</button>
-        </div>
-        <button class="btn btn-ghost i18n" style="margin-top:10px;" onclick="cancelTrade('creator')">✖️ CANCELAR TROCA</button>
-      </div>
-    </div>
-
-    <div class="progress-section" id="trade-respond-block">
-      <div class="progress-section-title i18n">🔑 Responder uma troca</div>
-      <div id="trade-respond-idle">
-        <textarea id="trade-offer-input" class="i18n" placeholder="Cole aqui o código de oferta" style="width:100%; min-height:56px; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:var(--mono); font-size:12px; resize:vertical;"></textarea>
-        <button class="btn btn-secondary i18n" style="margin-top:8px;" onclick="previewTradeOffer()">🔍 VER OFERTA</button>
-        <div id="trade-offer-preview" style="display:none; margin:10px 0;"></div>
-        <button class="btn btn-primary i18n" id="trade-respond-pick-btn" style="display:none;" onclick="openTradeItemPicker('respond')">🎴 ESCOLHER ITEM PARA OFERECER</button>
-      </div>
-      <div id="trade-respond-active" style="display:none;">
-        <div id="trade-respond-offer-line"></div>
-        <div class="duel-code-box" id="trade-respond-code"></div>
-        <button class="btn btn-outline i18n" onclick="copyDuelCode('trade-respond-code')">📋 COPIAR CÓDIGO DE RESPOSTA</button>
-        <textarea id="trade-respond-confirm-input" class="i18n" placeholder="Cole aqui o código final de confirmação" style="width:100%; min-height:56px; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:var(--mono); font-size:12px; resize:vertical; margin-top:10px;"></textarea>
-        <button class="btn btn-primary i18n" style="margin-top:8px;" onclick="confirmTradeAsResponder()">✅ CONFIRMAR TROCA</button>
-        <button class="btn btn-ghost i18n" style="margin-top:10px;" onclick="cancelTrade('responder')">✖️ CANCELAR TROCA</button>
-      </div>
-    </div>
+    <div id="trade-content"></div>
   </div>
 
+  <!-- ============ MERCADO (V1.9 BETA) ============ -->
+  <div id="screen-market" class="screen">
+    <div class="game-header">
+      <div class="header-icon-btn" onclick="backFromSubscreen()">◀</div>
+      <div class="header-title i18n">🏪 MERCADO</div>
+      <div class="header-icon-btn" style="visibility:hidden;">🔊</div>
+    </div>
+    <div class="grb-balance">🪙 <span id="grb-balance-value">0</span> GRB</div>
+    <div class="market-tabs">
+      <div class="market-tab i18n" id="market-tab-buy" onclick="switchMarketTab('buy')">🏪 COMPRAR</div>
+      <div class="market-tab i18n" id="market-tab-items" onclick="switchMarketTab('items')">📦 MEUS ITENS</div>
+      <div class="market-tab i18n" id="market-tab-listings" onclick="switchMarketTab('listings')">💰 MEUS ANÚNCIOS</div>
+    </div>
+    <div id="market-content"></div>
+  </div>
 
   <!-- ============ SETTINGS ============ -->
   <div id="screen-settings" class="screen">
@@ -593,7 +609,6 @@ button{ font-family:inherit; }
 
   <!-- ============ MODALS ============ -->
   <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
-    <div class="modal" id="modal-trade-picker"></div>
     <div class="modal" id="modal-work"></div>
     <div class="modal" id="modal-invest"></div>
     <div class="modal" id="modal-business"></div>
@@ -618,6 +633,21 @@ button{ font-family:inherit; }
         <button class="btn btn-outline" onclick="closeModal()">CANCELAR</button>
         <button class="btn btn-danger" style="background:var(--red); color:#fff; border:none;" onclick="onConfirmYes()">CONFIRMAR</button>
       </div>
+    </div>
+
+    <!-- ============ CONTA (autenticação e sincronização) ============ -->
+    <div class="modal" id="modal-auth">
+      <h2 class="i18n" style="text-align:center;" id="auth-modal-title">Entrar</h2>
+      <div class="auth-tabs">
+        <button class="btn btn-secondary i18n active-tab" id="auth-tab-login" style="flex:1;" onclick="switchAuthTab('login')">Entrar</button>
+        <button class="btn btn-secondary i18n" id="auth-tab-signup" style="flex:1;" onclick="switchAuthTab('signup')">Criar Conta</button>
+      </div>
+      <input type="text" id="auth-nickname" class="auth-field i18n" placeholder="Apelido" style="display:none;">
+      <input type="email" id="auth-email" class="auth-field i18n" placeholder="E-mail" autocomplete="email">
+      <input type="password" id="auth-password" class="auth-field i18n" placeholder="Senha" autocomplete="current-password">
+      <div id="auth-error" style="display:none; color:var(--red); font-size:12px; margin-bottom:8px; text-align:center;"></div>
+      <button class="btn btn-primary i18n" id="auth-submit-btn" style="width:100%;" onclick="submitAuthForm()">Entrar</button>
+      <button class="btn btn-ghost i18n" style="width:100%; margin-top:8px;" onclick="closeModal()">Cancelar</button>
     </div>
 
     <div class="modal" id="modal-victory">
@@ -679,6 +709,8 @@ button{ font-family:inherit; }
     </div>
 
     <div class="modal" id="modal-collection-item"></div>
+    <div class="modal" id="modal-trade-picker"></div>
+    <div class="modal" id="modal-market-sell"></div>
   </div>
 
 </div>
@@ -695,6 +727,23 @@ button{ font-family:inherit; }
 var STORAGE_KEY = 'grogb_save_v1';
 var PERSIST_KEY = 'grogb_persist_v1';
 var GOAL = 1000000;
+
+/* ===================== SUPABASE — CONFIGURAÇÃO =====================
+   Preencha com as credenciais do SEU projeto Supabase (Project Settings > API).
+   SUPABASE_URL e SUPABASE_ANON_KEY são seguros para ficar no código do navegador —
+   a segurança de verdade vem das políticas de RLS e das funções RPC no banco
+   (veja os dois blocos SQL comentados no final deste arquivo: "PARTE 1 — SCHEMA
+   BASE" e "PARTE 2 — SEGURANÇA E SINCRONIZAÇÃO"; rode os dois, nessa ordem).
+   NUNCA coloque aqui a Service Role Key — essa é secreta e nunca deve ir para o
+   código de um jogo público. */
+var SUPABASE_URL = 'https://bzoenqdjgounzbtyraaz.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6b2VucWRqZ291bnpidHlyYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMDU4MzEsImV4cCI6MjEwMTg4MTgzMX0.-WjNJTdRCrJVX-36IUuQCWdbdojQu7Gn4bUuCqL4faM'
+
+var supabaseClient = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+var authUser = null;       // usuário autenticado (auth.users), null se deslogado
+var authPlayerRow = null;  // linha correspondente em "players" (contém o nickname)
 
 var LEVELS = [
   { id:0, name:'SOBREVIVENTE', min:0,       max:999,      color:'#9098A8' },
@@ -1038,29 +1087,68 @@ var TRANSLATIONS = {
     '💎 COLEÇÃO':'💎 COLLECTION', '💎 Coleção':'💎 Collection',
     'Item não descoberto':'Item not discovered', 'itens descobertos':'items discovered',
     'Edição':'Edition', 'Novo item: ':'New item: ', 'Fechar':'Close',
-    // V1.8-B — Trocas entre jogadores
-    '🔄 TROCAR ITENS':'🔄 TRADE ITEMS',
-    'Troque itens da coleção com outro jogador usando códigos. Sem internet — só compartilhe o código.':'Trade collection items with another player using codes. No internet needed — just share the code.',
-    '🆕 Criar troca':'🆕 Create trade', '🎴 ESCOLHER ITEM PARA OFERECER':'🎴 CHOOSE ITEM TO OFFER',
-    '📋 COPIAR CÓDIGO':'📋 COPY CODE', 'Cole aqui o código de resposta':'Paste the response code here',
-    '🔍 VER RESPOSTA':'🔍 VIEW RESPONSE', '✅ CONFIRMAR TROCA':'✅ CONFIRM TRADE', '✖️ CANCELAR TROCA':'✖️ CANCEL TRADE',
-    '🔑 Responder uma troca':'🔑 Respond to a trade', 'Cole aqui o código de oferta':'Paste the offer code here',
-    '🔍 VER OFERTA':'🔍 VIEW OFFER', '📋 COPIAR CÓDIGO DE RESPOSTA':'📋 COPY RESPONSE CODE',
-    'Cole aqui o código final de confirmação':'Paste the final confirmation code here',
-    'Escolha o item que você oferece':'Choose the item you are offering', 'Cancelar':'Cancel',
-    'Você ainda não possui itens para oferecer.':'You don\'t have any items to offer yet.',
-    'VOCÊ OFERECE':'YOU OFFER', 'VOCÊ RECEBE':'YOU RECEIVE', 'OFERTA DE ':'OFFER FROM ',
-    'Código inválido. Verifique e tente novamente.':'Invalid code. Please check and try again.',
-    'Código inválido ou não corresponde à sua oferta.':'Invalid code or it doesn\'t match your offer.',
-    'Código final inválido ou não corresponde a esta troca.':'Invalid final code or it doesn\'t match this trade.',
-    'Você não possui mais esse item. A troca foi cancelada.':'You no longer have that item. The trade was cancelled.',
-    'Troca confirmada!':'Trade confirmed!',
-    'Envie este código final para a outra pessoa concluir a troca do lado dela:':'Send this final code so the other person can complete the trade on their side:',
-    'Troca concluída com sucesso!':'Trade completed successfully!', 'Troca cancelada.':'Trade cancelled.',
+    // Conta online
+    '👤 ENTRAR / CRIAR CONTA':'👤 LOG IN / CREATE ACCOUNT', '🚪 SAIR':'🚪 LOG OUT',
+    'Entrar':'Log In', 'Criar Conta':'Create Account', 'Apelido':'Nickname', 'E-mail':'Email', 'Senha':'Password',
+    'Preencha apelido, e-mail e senha.':'Fill in nickname, email and password.',
+    'Preencha e-mail e senha.':'Fill in email and password.',
+    'A senha precisa ter pelo menos 6 caracteres.':'Password must be at least 6 characters.',
+    'Conta criada! Bem-vindo(a).':'Account created! Welcome.', 'Login realizado!':'Logged in!',
+    'Sair da sua conta?':'Log out of your account?', 'Você saiu da conta.':'You have logged out.',
+    'Não foi possível criar a conta. Tente novamente.':'Could not create the account. Please try again.',
+    'Não foi possível entrar. Tente novamente.':'Could not log in. Please try again.',
+    'Conta online ainda não configurada (preencha SUPABASE_URL e SUPABASE_ANON_KEY no código).':'Online account not configured yet (fill in SUPABASE_URL and SUPABASE_ANON_KEY in the code).',
+    '☁️ sincronizado':'☁️ synced',
+    'Sua coleção e saldo local foram importados para a sua conta.':'Your local collection and balance were imported into your account.',
+    'Não foi possível sincronizar com a nuvem agora. Usando dados locais.':'Could not sync with the cloud right now. Using local data.',
+    'Jogador':'Player',
     'Comum':'Common', 'Incomum':'Uncommon', 'Raro':'Rare', 'Épico':'Epic', 'Lendário':'Legendary',
     'Moeda Búzios':'Cowrie Coin', 'Cédula Sortuda':'Lucky Bill', 'Gráfico Dourado':'Golden Chart',
     'Cofre Antigo':'Old Vault', 'Maleta Executiva':'Executive Briefcase', 'Cartola do Magnata':'Tycoon Top Hat',
-    'Diamante Bruto':'Rough Diamond', 'Troféu de Ouro':'Gold Trophy', 'Coroa Real':'Royal Crown', 'Foguete do Sucesso':'Rocket of Success'
+    'Diamante Bruto':'Rough Diamond', 'Troféu de Ouro':'Gold Trophy', 'Coroa Real':'Royal Crown', 'Foguete do Sucesso':'Rocket of Success',
+    // V1.8-B — Trocas
+    '🔁 TROCAR':'🔁 TRADE', '🔁 TROCAR ITENS':'🔁 TRADE ITEMS',
+    'Escolha o item que você oferece':'Choose the item you offer', 'Você ainda não possui itens colecionáveis.':'You don\'t own any collectibles yet.',
+    'Cancelar':'Cancel', 'Item desconhecido':'Unknown item',
+    'Você já tem uma troca em andamento. Cancele-a antes de aceitar outra.':'You already have a trade in progress. Cancel it before accepting another.',
+    'Você precisa de ao menos 1 item colecionável para trocar.':'You need at least 1 collectible to trade.',
+    'Este código não corresponde a uma troca sua em andamento.':'This code doesn\'t match a trade you have in progress.',
+    'Este código não corresponde à sua oferta original.':'This code doesn\'t match your original offer.',
+    'Este código não corresponde à sua oferta.':'This code doesn\'t match your offer.',
+    'Código inválido. Verifique e tente novamente.':'Invalid code. Please check and try again.',
+    'Troca com ':'Trade with ', 'VOCÊ OFERECE:':'YOU OFFER:', 'VOCÊ RECEBE:':'YOU RECEIVE:',
+    'CONFIRMAR TROCA':'CONFIRM TRADE', 'Voltar':'Back',
+    'Você não possui mais este item. A troca foi cancelada.':'You no longer own this item. The trade was cancelled.',
+    'Troca concluída! Envie o código final para ':'Trade completed! Send the final code to ', ' confirmar.':' to confirm.',
+    'Troca concluída com sucesso!':'Trade completed successfully!',
+    'COPIAR CÓDIGO':'COPY CODE', 'CONTINUAR':'CONTINUE',
+    'Troca concluída!':'Trade completed!', 'VOCÊ OFERECEU:':'YOU OFFERED:', 'VOCÊ RECEBEU:':'YOU RECEIVED:',
+    'Envie este código para o outro jogador confirmar:':'Send this code for the other player to confirm:',
+    'VER COLEÇÃO':'VIEW COLLECTION',
+    'CRIAR TROCA':'CREATE TRADE', '📋 Seu último código de troca:':'📋 Your last trade code:',
+    'Inserir código de troca':'Enter trade code', 'Cole o código recebido e toque em continuar:':'Paste the received code and tap continue:',
+    'Cole aqui o código de troca':'Paste the trade code here',
+    'Aguardando o outro jogador':'Waiting for the other player',
+    'Envie este código para o outro jogador:':'Send this code to the other player:',
+    'Recebeu a resposta? Cole o código aqui:':'Got a reply? Paste the code here:',
+    'Cole aqui o código de resposta':'Paste the reply code here', 'CANCELAR TROCA':'CANCEL TRADE',
+    'Aguardando confirmação de ':'Waiting for confirmation from ',
+    'Envie este código de volta para quem criou a troca:':'Send this code back to whoever created the trade:',
+    'Recebeu a confirmação final? Cole o código aqui:':'Got the final confirmation? Paste the code here:',
+    'Cole aqui o código final':'Paste the final code here',
+    // V1.9 — Mercado
+    '🏪 MERCADO':'🏪 MARKET', '🏪 COMPRAR':'🏪 BUY', '📦 MEUS ITENS':'📦 MY ITEMS', '💰 MEUS ANÚNCIOS':'💰 MY LISTINGS',
+    'Nenhum item à venda no momento. Venda algo em MEUS ITENS!':'No items for sale right now. Sell something in MY ITEMS!',
+    'COMPRAR':'BUY', 'VENDER':'SELL', 'CANCELAR':'CANCEL',
+    'Você não tem anúncios ativos.':'You have no active listings.',
+    'Vender item':'Sell item', 'Preço em GRB:':'Price in GRB:', 'Ex: 50':'E.g. 50',
+    'ANUNCIAR':'LIST ITEM', 'Você não possui mais este item.':'You no longer own this item.',
+    'Informe um preço válido em GRB.':'Enter a valid price in GRB.',
+    'Item anunciado no mercado!':'Item listed on the market!',
+    'Anúncio cancelado. Item devolvido à sua coleção.':'Listing cancelled. Item returned to your collection.',
+    'Este item não está mais disponível.':'This item is no longer available.',
+    'Saldo de GRB insuficiente.':'Insufficient GRB balance.',
+    'Item comprado com sucesso!':'Item purchased successfully!'
   }
 };
 function t(str){
@@ -1458,7 +1546,11 @@ function defaultPersistent(){
     pendingBonus:null,
     lastChallengeCode:null,
     collection:{ owned:[] },
-    trade:{ asCreator:null, asResponder:null }
+    pendingTrade:null,
+    lastTradeCode:null,
+    grb:500,
+    marketListings:[],
+    syncedAccountId:null
   };
 }
 
@@ -2199,6 +2291,7 @@ function refreshMenuButtons(){
   btn.style.display = hasSave() ? 'flex' : 'none';
   updateEngagementUI();
   renderModeGrid();
+  renderAccountArea();
 }
 
 function startNewGame(){
@@ -2480,6 +2573,263 @@ function showConfirm(message, onConfirm){
   openModal('modal-confirm');
 }
 function onConfirmYes(){ var cb = pendingConfirmCallback; pendingConfirmCallback=null; closeModal(); if(cb) cb(); }
+
+/* ===================== CONTA ONLINE — SUPABASE AUTH =====================
+   Autenticação (criar conta/entrar/sair, sessão persistente) + sincronização
+   de saldo GRB e coleção com a nuvem (função syncCloudOnLogin, logo abaixo). */
+var authTab = 'login';
+
+function supabaseReady(){
+  if(!supabaseClient){
+    toast('⚠️ '+t('Conta online ainda não configurada (preencha SUPABASE_URL e SUPABASE_ANON_KEY no código).'));
+    return false;
+  }
+  return true;
+}
+
+async function initAuth(){
+  renderAccountArea();
+  if(!supabaseClient) return;
+  try{
+    var res = await supabaseClient.auth.getSession();
+    var session = res && res.data && res.data.session;
+    if(session){
+      authUser = session.user;
+      await loadPlayerRow();
+      renderAccountArea();
+      await syncCloudOnLogin(); // reabrir o jogo/recarregar a página também sincroniza
+    }
+  }catch(e){ console.warn('Supabase getSession falhou', e); }
+  supabaseClient.auth.onAuthStateChange(function(event, session){
+    authUser = session ? session.user : null;
+    if(authUser){ loadPlayerRow().then(function(){ renderAccountArea(); syncCloudOnLogin(); }); }
+    else { authPlayerRow = null; renderAccountArea(); }
+  });
+}
+
+async function loadPlayerRow(){
+  if(!supabaseClient || !authUser) return;
+  try{
+    var res = await supabaseClient.from('players').select('*').eq('id', authUser.id).maybeSingle();
+    if(!res.error && res.data){ authPlayerRow = res.data; }
+  }catch(e){ console.warn('Falha ao carregar jogador', e); }
+}
+
+function renderAccountArea(){
+  var el = document.getElementById('account-bar');
+  if(!el) return;
+  if(authUser){
+    var nick = (authPlayerRow && authPlayerRow.nickname) || authUser.email || t('Jogador');
+    el.innerHTML = '<div class="account-bar-connected"><span class="nick">👤 '+nick+' <span style="opacity:.6; font-size:11px;" class="i18n" title="Coleção e saldo sincronizados">☁️ sincronizado</span></span>'
+      + '<button class="btn btn-ghost i18n" style="padding:6px 12px; font-size:12px;" onclick="signOutAccount()">🚪 SAIR</button></div>';
+  } else {
+    el.innerHTML = '<button class="btn btn-outline i18n" style="width:100%;" onclick="openAuthModal()">👤 ENTRAR / CRIAR CONTA</button>';
+  }
+}
+
+function openAuthModal(){
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-nickname').value = persistent.profile.name || '';
+  document.getElementById('auth-error').style.display = 'none';
+  switchAuthTab('login');
+  openModal('modal-auth');
+}
+
+function switchAuthTab(tab){
+  authTab = tab;
+  document.getElementById('auth-tab-login').classList.toggle('active-tab', tab==='login');
+  document.getElementById('auth-tab-signup').classList.toggle('active-tab', tab==='signup');
+  document.getElementById('auth-nickname').style.display = tab==='signup' ? 'block' : 'none';
+  document.getElementById('auth-modal-title').textContent = t(tab==='signup' ? 'Criar Conta' : 'Entrar');
+  document.getElementById('auth-submit-btn').textContent = t(tab==='signup' ? 'Criar Conta' : 'Entrar');
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function submitAuthForm(){
+  if(authTab==='signup'){ signUpAccount(); } else { signInAccount(); }
+}
+
+async function signUpAccount(){
+  if(!supabaseReady()) return;
+  var email = document.getElementById('auth-email').value.trim();
+  var pass = document.getElementById('auth-password').value;
+  var nickname = document.getElementById('auth-nickname').value.trim();
+  var errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+  if(!email || !pass || !nickname){ errEl.textContent = t('Preencha apelido, e-mail e senha.'); errEl.style.display='block'; return; }
+  if(pass.length<6){ errEl.textContent = t('A senha precisa ter pelo menos 6 caracteres.'); errEl.style.display='block'; return; }
+  try{
+    var res = await supabaseClient.auth.signUp({ email:email, password:pass });
+    if(res.error){ errEl.textContent = res.error.message; errEl.style.display='block'; return; }
+    if(res.data && res.data.user){
+      authUser = res.data.user;
+      await supabaseClient.from('players').insert({ id:authUser.id, nickname:nickname });
+      await supabaseClient.from('wallets').insert({ player_id:authUser.id, saldo_grb:0 });
+      await loadPlayerRow();
+    }
+    closeModal();
+    renderAccountArea();
+    toast('👤 '+t('Conta criada! Bem-vindo(a).'));
+  }catch(e){ errEl.textContent = t('Não foi possível criar a conta. Tente novamente.'); errEl.style.display='block'; }
+}
+
+async function signInAccount(){
+  if(!supabaseReady()) return;
+  var email = document.getElementById('auth-email').value.trim();
+  var pass = document.getElementById('auth-password').value;
+  var errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+  if(!email || !pass){ errEl.textContent = t('Preencha e-mail e senha.'); errEl.style.display='block'; return; }
+  try{
+    var res = await supabaseClient.auth.signInWithPassword({ email:email, password:pass });
+    if(res.error){ errEl.textContent = res.error.message; errEl.style.display='block'; return; }
+    authUser = res.data.user;
+    await loadPlayerRow();
+    closeModal();
+    renderAccountArea();
+    toast('👤 '+t('Login realizado!'));
+  }catch(e){ errEl.textContent = t('Não foi possível entrar. Tente novamente.'); errEl.style.display='block'; }
+}
+
+function signOutAccount(){
+  showConfirm(t('Sair da sua conta?'), function(){
+    if(supabaseClient){ supabaseClient.auth.signOut(); }
+    authUser = null; authPlayerRow = null;
+    renderAccountArea();
+    toast(t('Você saiu da conta.'));
+  });
+}
+
+/* ===================== SINCRONIZAÇÃO ONLINE — COLEÇÃO + GRB (V1.10-A2) =====================
+   A partir daqui, enquanto autenticado, a nuvem (Supabase) é a fonte principal de
+   verdade para coleção e saldo GRB. Toda alteração local também é enviada para o
+   Supabase através de funções RPC (nunca por UPDATE/INSERT direto do navegador),
+   para que o próprio banco valide e nunca aceite um saldo arbitrário ou um item
+   fora do catálogo — ver bloco SQL "V1.10-A2" no final do arquivo. */
+
+// Evita rodar duas sincronizações completas ao mesmo tempo (ex.: getSession + onAuthStateChange).
+var cloudSyncInFlight = false;
+
+async function syncCloudOnLogin(){
+  if(!authUser || !supabaseClient) return;
+  if(cloudSyncInFlight) return;
+  cloudSyncInFlight = true;
+  try{
+    await loadPlayerRow();
+    var alreadyMigrated = !!(authPlayerRow && authPlayerRow.migrated);
+    // Os dados locais só podem ser migrados se nunca tiverem sido vinculados a NENHUMA
+    // conta (syncedAccountId nulo) ou se já pertencerem a esta mesma conta. Se pertencerem
+    // a outra conta (ex.: espelho deixado no dispositivo por um logout anterior), nunca
+    // devem ser usados para inicializar esta conta.
+    var localBelongsToOther = !!(persistent.syncedAccountId && persistent.syncedAccountId !== authUser.id);
+
+    var walletRes = await supabaseClient.from('wallets').select('saldo_grb').eq('player_id', authUser.id).maybeSingle();
+    var invRes = await supabaseClient.from('inventory').select('item_id,edition,serial').eq('player_id', authUser.id);
+    var cloudGrb = (walletRes && walletRes.data) ? walletRes.data.saldo_grb : 0;
+    var cloudInventory = (invRes && Array.isArray(invRes.data)) ? invRes.data : [];
+
+    if(!alreadyMigrated && !localBelongsToOther){
+      // MIGRAÇÃO ÚNICA: envia o que já existe localmente para a conta recém-conectada,
+      // usando as mesmas funções seguras (delta/RPC), nunca sobrescrevendo o saldo direto.
+      var localGrb = persistent.grb || 0;
+      var localItems = (persistent.collection && persistent.collection.owned) || [];
+      if(localGrb>0){
+        try{ await supabaseClient.rpc('grb_apply_delta', { p_delta: localGrb }); }catch(e){ console.warn('Falha ao migrar saldo GRB', e); }
+      }
+      for(var i=0;i<localItems.length;i++){
+        var u = localItems[i];
+        try{ await supabaseClient.rpc('grant_collectible_item', { p_item_id:u.itemId, p_edition:u.edition, p_serial:u.serial }); }
+        catch(e){ console.warn('Falha ao migrar item', u, e); }
+      }
+      try{ await supabaseClient.from('players').update({ migrated:true }).eq('id', authUser.id); authPlayerRow = authPlayerRow ? Object.assign({}, authPlayerRow, {migrated:true}) : {migrated:true}; }
+      catch(e){ console.warn('Falha ao marcar migração como concluída', e); }
+      if(localGrb>0 || localItems.length){ toast('☁️ '+t('Sua coleção e saldo local foram importados para a sua conta.')); }
+
+      // recarrega do servidor para refletir exatamente o estado pós-migração
+      walletRes = await supabaseClient.from('wallets').select('saldo_grb').eq('player_id', authUser.id).maybeSingle();
+      invRes = await supabaseClient.from('inventory').select('item_id,edition,serial').eq('player_id', authUser.id);
+      cloudGrb = (walletRes && walletRes.data) ? walletRes.data.saldo_grb : localGrb;
+      cloudInventory = (invRes && Array.isArray(invRes.data)) ? invRes.data : [];
+    }
+
+    // A NUVEM passa a ser a fonte principal (item 1). Itens preservam edição/serial exatamente.
+    persistent.grb = (typeof cloudGrb==='number' && isFinite(cloudGrb)) ? cloudGrb : (persistent.grb||0);
+    persistent.collection.owned = cloudInventory.map(function(row){ return { itemId:row.item_id, edition:row.edition, serial:row.serial }; });
+    // Este espelho local agora corresponde aos dados da conta autenticada — nunca mais
+    // poderá ser usado para migrar/inicializar uma conta diferente neste dispositivo.
+    persistent.syncedAccountId = authUser.id;
+    savePersistent();
+
+    var balEl = document.getElementById('grb-balance-value');
+    if(balEl) balEl.textContent = formatGRB(persistent.grb);
+    if(document.getElementById('collection-grid') && document.getElementById('screen-collection').classList.contains('active')) renderCollectionGrid();
+    if(document.getElementById('screen-market') && document.getElementById('screen-market').classList.contains('active')) renderMarketScreen();
+  }catch(e){
+    console.warn('Falha na sincronização com a nuvem', e);
+    toast('⚠️ '+t('Não foi possível sincronizar com a nuvem agora. Usando dados locais.'));
+  }finally{
+    cloudSyncInFlight = false;
+  }
+}
+
+// Aplica uma variação de saldo local e sincroniza com o Supabase.
+async function applyGRBDelta(delta) {
+  persistent.grb = Math.max(0, (persistent.grb || 0) + delta);
+  savePersistent();
+
+  if (authUser && supabaseClient && delta) {
+    try {
+      const result = await supabaseClient.rpc('grb_apply_delta', {
+        p_delta: delta
+      });
+
+      if (result && result.error) {
+        console.warn('Falha ao sincronizar GRB:', result.error);
+      }
+    } catch (e) {
+      console.warn('Falha ao sincronizar GRB:', e);
+    }
+  }
+}
+
+async function syncCollectibleGrantToCloud(unit) {
+  if (!authUser || !supabaseClient || !unit) return;
+
+  try {
+    const result = await supabaseClient.rpc('grant_collectible_item', {
+      p_item_id: unit.itemId,
+      p_edition: unit.edition,
+      p_serial: unit.serial
+    });
+
+    if (result && result.error) {
+      console.warn('Falha ao sincronizar novo item:', result.error);
+    }
+  } catch (e) {
+    console.warn('Falha ao sincronizar novo item:', e);
+  }
+}
+
+async function syncCollectibleRemovalToCloud(unit) {
+  if (!authUser || !supabaseClient || !unit) return;
+
+  try {
+    const result = await supabaseClient
+      .from('inventory')
+      .delete()
+      .eq('player_id', authUser.id)
+      .eq('item_id', unit.itemId)
+      .eq('edition', unit.edition)
+      .eq('serial', unit.serial);
+
+    if (result && result.error) {
+      console.warn('Falha ao remover item na nuvem:', result.error);
+    }
+  } catch (e) {
+    console.warn('Falha ao remover item na nuvem:', e);
+  }
+}
 
 /* ===================== RETENÇÃO DIÁRIA — RUNTIME (V1.3) ===================== */
 function todayKey(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
@@ -2909,6 +3259,7 @@ function grantCollectible(itemId){
   var unit = { itemId:item.id, edition:edition, serial:serial };
   persistent.collection.owned.push(unit);
   savePersistent();
+  syncCollectibleGrantToCloud(unit);
   var rarity = RARITY_INFO[item.rarity];
   toast('💎 '+withName(t('Novo item: ')+item.icon+' '+t(item.name)+' ('+t(rarity.label)+')'));
   playSound('achievement'); vibrate('win');
@@ -2972,222 +3323,621 @@ function openCollectionItemModal(itemId){
   openModal('modal-collection-item');
 }
 
-/* ===================== TROCAS ENTRE JOGADORES (V1.8-B) =====================
-   Serverless: reaproveita o mesmo padrão de código (base64 de JSON) do Desafio 1v1 (V1.7).
-   Handshake de 3 códigos garante que nenhum item é removido antes das duas confirmações:
-   1) Código de OFERTA (criador -> respondente)
-   2) Código de RESPOSTA (respondente -> criador) — só aí o criador vê as duas pontas e confirma
-   3) Código de CONFIRMAÇÃO FINAL (criador -> respondente) — só aí o respondente também confirma
-   Cada lado só altera o próprio inventário no momento em que aperta CONFIRMAR, no próprio dispositivo. */
-var tradePickerContext = null;
-var tradeIncomingOffer = null;
+/* ===================== TROCAS — RUNTIME (V1.8-B) ===================== */
+var tradePickCallback = null;
+var tradeReviewObj = null;
 
-function encodeTradeCode(obj){ return encodeDuelCode(obj); }
-function decodeTradeCode(code, expectedType){
+function genTradeId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function encodeTradeCode(obj){
+  try{ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/=+$/,''); }catch(e){ return ''; }
+}
+function decodeTradeCode(code){
   try{
     code = (code||'').trim().replace(/\s+/g,'');
     if(!code) return null;
     var pad = code.length % 4; if(pad) code += '='.repeat(4-pad);
     var obj = JSON.parse(decodeURIComponent(escape(atob(code))));
-    if(!obj || obj.t!==expectedType) return null;
+    if(!obj || typeof obj.k!=='string' || typeof obj.id!=='string') return null;
     return obj;
   }catch(e){ return null; }
 }
 
 function findOwnedUnitIndex(unit){
   var owned = persistent.collection.owned;
-  if(unit.idx!=null && owned[unit.idx] && owned[unit.idx].itemId===unit.itemId && owned[unit.idx].edition===unit.edition && owned[unit.idx].serial===unit.serial){
-    return unit.idx;
-  }
   for(var i=0;i<owned.length;i++){
     if(owned[i].itemId===unit.itemId && owned[i].edition===unit.edition && owned[i].serial===unit.serial) return i;
   }
   return -1;
 }
+function ownsUnit(unit){ return findOwnedUnitIndex(unit)!==-1; }
+function removeOwnedUnitExact(unit){
+  var idx = findOwnedUnitIndex(unit);
+  if(idx!==-1){
+    persistent.collection.owned.splice(idx,1);
+    syncCollectibleRemovalToCloud(unit);
+  }
+  return idx!==-1;
+}
+function addOwnedUnit(unit){
+  persistent.collection.owned.push(unit);
+  syncCollectibleGrantToCloud(unit);
+}
+function unitsMatch(a,b){ return !!(a && b && a.itemId===b.itemId && a.edition===b.edition && a.serial===b.serial); }
 
-function itemLabel(unit){
+function itemCardHtml(unit){
   var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===unit.itemId; })[0];
-  if(!item) return '???';
-  return item.icon+' '+t(item.name)+' · '+t('Edição')+' '+unit.edition+' #'+padSerial(unit.serial, item.supply);
+  if(!item) return '<div class="trade-item-card"><div class="ti-icon">❔</div><div class="ti-info"><div class="ti-name">'+t('Item desconhecido')+'</div></div></div>';
+  var rarity = RARITY_INFO[item.rarity];
+  return '<div class="trade-item-card"><div class="ti-icon">'+item.icon+'</div><div class="ti-info">'
+       + '<div class="ti-name">'+t(item.name)+' <span class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</span></div>'
+       + '<div class="ti-meta">'+t('Edição')+' '+unit.edition+' · #'+padSerial(unit.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div>'
+       + '</div></div>';
 }
 
-function openTradeScreen(){
-  renderTradeScreen();
-  showScreen('screen-trade');
-}
-
-function renderTradeScreen(){
-  var pc = persistent.trade.asCreator;
-  document.getElementById('trade-create-idle').style.display = pc ? 'none' : 'block';
-  document.getElementById('trade-create-active').style.display = pc ? 'block' : 'none';
-  if(pc){
-    document.getElementById('trade-create-offer-line').innerHTML = '<div class="mission-row"><div class="mr-head"><span>🎁 '+t('VOCÊ OFERECE')+'</span></div><div class="mr-desc">'+itemLabel(pc.offerUnit)+'</div></div>';
-    document.getElementById('trade-create-code').textContent = pc.code;
-    document.getElementById('trade-create-response-input').value = '';
-    document.getElementById('trade-create-preview').style.display = 'none';
-    document.getElementById('trade-create-confirm-btn').style.display = 'none';
-  }
-
-  var pr = persistent.trade.asResponder;
-  document.getElementById('trade-respond-idle').style.display = pr ? 'none' : 'block';
-  document.getElementById('trade-respond-active').style.display = pr ? 'block' : 'none';
-  if(pr){
-    document.getElementById('trade-respond-offer-line').innerHTML =
-        '<div class="mission-row"><div class="mr-head"><span>🎁 '+t('VOCÊ OFERECE')+'</span></div><div class="mr-desc">'+itemLabel(pr.offerUnit)+'</div></div>'
-      + '<div class="mission-row"><div class="mr-head"><span>💎 '+t('VOCÊ RECEBE')+'</span></div><div class="mr-desc">'+itemLabel(pr.theirItem)+'</div></div>';
-    document.getElementById('trade-respond-code').textContent = pr.code;
-    document.getElementById('trade-respond-confirm-input').value = '';
-  } else {
-    document.getElementById('trade-offer-input').value = '';
-    document.getElementById('trade-offer-preview').style.display = 'none';
-    document.getElementById('trade-respond-pick-btn').style.display = 'none';
-  }
-}
-
-function openTradeItemPicker(context){
-  if(!persistent.collection.owned.length){
-    toast('💎 '+t('Você ainda não possui itens para oferecer.'));
+function openTradePicker(onPick){
+  var owned = persistent.collection.owned;
+  var html = '<h2>'+t('Escolha o item que você oferece')+'</h2>';
+  if(!owned.length){
+    html += '<p class="modal-sub" style="text-align:center;">'+t('Você ainda não possui itens colecionáveis.')+'</p>';
+    html += '<button class="btn btn-ghost" onclick="closeModal()">'+t('Fechar')+'</button>';
+    document.getElementById('modal-trade-picker').innerHTML = html;
+    openModal('modal-trade-picker');
     return;
   }
-  tradePickerContext = context;
-  var html = '<div class="big-modal-title i18n">Escolha o item que você oferece</div><div class="ach-grid">';
-  persistent.collection.owned.forEach(function(u, idx){
-    var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===u.itemId; })[0];
+  html += '<div class="ach-grid">';
+  owned.forEach(function(unit, idx){
+    var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===unit.itemId; })[0];
     if(!item) return;
     var rarity = RARITY_INFO[item.rarity];
-    html += '<div class="ach-card coll-card" onclick="pickTradeItem('+idx+')">'
+    html += '<div class="ach-card trade-picker-item" onclick="pickTradeItem('+idx+')">'
          +  '<div class="ai">'+item.icon+'</div>'
          +  '<div class="an">'+t(item.name)+'</div>'
-         +  '<div class="ad">'+t('Edição')+' '+u.edition+'<br>#'+padSerial(u.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div>'
+         +  '<div class="ad">'+t('Edição')+' '+unit.edition+'<br>#'+padSerial(unit.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div>'
          +  '<div class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</div>'
          +  '</div>';
   });
-  html += '</div><button class="btn btn-ghost i18n" style="margin-top:14px;" onclick="closeModal()">Cancelar</button>';
+  html += '</div>';
+  html += '<button class="btn btn-ghost" style="margin-top:14px;" onclick="closeModal()">'+t('Cancelar')+'</button>';
   document.getElementById('modal-trade-picker').innerHTML = html;
+  tradePickCallback = onPick;
   openModal('modal-trade-picker');
 }
-
 function pickTradeItem(idx){
-  var owned = persistent.collection.owned;
-  var u = owned[idx];
-  if(!u) return;
-  var unit = { itemId:u.itemId, edition:u.edition, serial:u.serial, idx:idx };
+  var unit = persistent.collection.owned[idx];
   closeModal();
-  if(tradePickerContext==='create'){
-    var code = encodeTradeCode({ t:'trade_offer', from:(playerName()||t('Jogador')), item:{ itemId:unit.itemId, edition:unit.edition, serial:unit.serial } });
-    persistent.trade.asCreator = { offerUnit:unit, code:code };
+  var cb = tradePickCallback;
+  tradePickCallback = null;
+  if(cb && unit) cb(unit);
+}
+
+function openTradeScreen(){ renderTradeScreen(); showScreen('screen-trade'); }
+
+function startCreateTrade(){
+  openTradePicker(function(unit){
+    var tradeId = genTradeId();
+    var code = encodeTradeCode({ k:'offer', id:tradeId, n:(playerName()||t('Jogador')), item:unit });
+    persistent.pendingTrade = { tradeId:tradeId, role:'creator', myItem:unit, theirName:null, theirItem:null, stage:'awaiting_counter', code:code };
     savePersistent();
-  } else if(tradePickerContext==='respond'){
-    if(!tradeIncomingOffer) return;
-    var code2 = encodeTradeCode({ t:'trade_response', from:(playerName()||t('Jogador')), myItem:{ itemId:unit.itemId, edition:unit.edition, serial:unit.serial }, theirItem:tradeIncomingOffer.item });
-    persistent.trade.asResponder = { offerUnit:unit, theirItem:tradeIncomingOffer.item, code:code2 };
-    savePersistent();
-    tradeIncomingOffer = null;
-  }
+    renderTradeScreen();
+  });
+}
+
+function cancelPendingTrade(){
+  persistent.pendingTrade = null;
+  savePersistent();
   renderTradeScreen();
 }
 
-function previewTradeOffer(){
-  var raw = document.getElementById('trade-offer-input').value;
-  var obj = decodeTradeCode(raw, 'trade_offer');
-  var prev = document.getElementById('trade-offer-preview');
-  var pickBtn = document.getElementById('trade-respond-pick-btn');
-  prev.style.display = 'block';
-  if(!obj || !obj.item){
-    prev.innerHTML = '<p class="modal-sub" style="color:var(--red); text-align:center;">'+t('Código inválido. Verifique e tente novamente.')+'</p>';
-    pickBtn.style.display = 'none';
-    tradeIncomingOffer = null;
+function previewTradeAction(){
+  var input = document.getElementById('trade-code-input');
+  var raw = input ? input.value : '';
+  var obj = decodeTradeCode(raw);
+  var box = document.getElementById('trade-action-result');
+  function showError(msg){ if(box){ box.style.display='block'; box.innerHTML = '<p class="modal-sub" style="color:var(--red); text-align:center;">'+msg+'</p>'; } }
+
+  if(!obj){ showError(t('Código inválido. Verifique e tente novamente.')); return; }
+  var pt = persistent.pendingTrade;
+
+  if(obj.k==='offer'){
+    if(pt){ toast(t('Você já tem uma troca em andamento. Cancele-a antes de aceitar outra.')); return; }
+    if(!persistent.collection.owned.length){ toast(t('Você precisa de ao menos 1 item colecionável para trocar.')); return; }
+    openTradePicker(function(unit){
+      var code = encodeTradeCode({ k:'counter', id:obj.id, n:(playerName()||t('Jogador')), creatorItem:obj.item, responderItem:unit });
+      persistent.pendingTrade = { tradeId:obj.id, role:'responder', myItem:unit, theirName:obj.n, theirItem:obj.item, stage:'awaiting_final', code:code };
+      savePersistent();
+      renderTradeScreen();
+    });
     return;
   }
-  tradeIncomingOffer = obj;
-  prev.innerHTML = '<div class="mission-row"><div class="mr-head"><span>🎁 '+t('OFERTA DE ')+(obj.from||'?').toUpperCase()+'</span></div><div class="mr-desc">'+itemLabel(obj.item)+'</div></div>';
-  pickBtn.style.display = 'block';
+
+  if(obj.k==='counter'){
+    if(!pt || pt.tradeId!==obj.id || pt.role!=='creator' || pt.stage!=='awaiting_counter'){
+      showError(t('Este código não corresponde a uma troca sua em andamento.')); return;
+    }
+    if(!unitsMatch(pt.myItem, obj.creatorItem)){
+      showError(t('Este código não corresponde à sua oferta original.')); return;
+    }
+    renderTradeReview(obj);
+    return;
+  }
+
+  if(obj.k==='final'){
+    if(!pt || pt.tradeId!==obj.id || pt.role!=='responder' || pt.stage!=='awaiting_final'){
+      showError(t('Este código não corresponde a uma troca sua em andamento.')); return;
+    }
+    if(!unitsMatch(pt.myItem, obj.responderItem)){
+      showError(t('Este código não corresponde à sua oferta.')); return;
+    }
+    confirmResponderTrade(obj);
+    return;
+  }
+
+  showError(t('Código inválido. Verifique e tente novamente.'));
 }
 
-function previewTradeResponse(){
-  var pc = persistent.trade.asCreator;
-  if(!pc) return;
-  var raw = document.getElementById('trade-create-response-input').value;
-  var obj = decodeTradeCode(raw, 'trade_response');
-  var prev = document.getElementById('trade-create-preview');
-  var confirmBtn = document.getElementById('trade-create-confirm-btn');
-  prev.style.display = 'block';
-  var matches = obj && obj.myItem && obj.theirItem && obj.theirItem.itemId===pc.offerUnit.itemId && obj.theirItem.edition===pc.offerUnit.edition && obj.theirItem.serial===pc.offerUnit.serial;
-  if(!matches){
-    prev.innerHTML = '<p class="modal-sub" style="color:var(--red); text-align:center;">'+t('Código inválido ou não corresponde à sua oferta.')+'</p>';
-    confirmBtn.style.display = 'none';
-    return;
-  }
-  pc.pendingResponse = obj;
-  prev.innerHTML = '<div class="mission-row"><div class="mr-head"><span>🎁 '+t('VOCÊ OFERECE')+'</span></div><div class="mr-desc">'+itemLabel(pc.offerUnit)+'</div></div>'
-    + '<div class="mission-row"><div class="mr-head"><span>💎 '+t('VOCÊ RECEBE')+'</span></div><div class="mr-desc">'+itemLabel(obj.myItem)+'</div></div>';
-  confirmBtn.style.display = 'block';
+function renderTradeReview(obj){
+  tradeReviewObj = obj;
+  var pt = persistent.pendingTrade;
+  var html = '<div class="progress-section" style="padding:16px;">';
+  html += '<div class="progress-section-title">🔁 '+t('Troca com ')+(obj.n||'?')+'</div>';
+  html += '<p class="modal-sub" style="margin:4px 0 12px; text-align:left;">'+t('VOCÊ OFERECE:')+'</p>';
+  html += itemCardHtml(pt.myItem);
+  html += '<div class="trade-arrow">⇅</div>';
+  html += '<p class="modal-sub" style="margin:12px 0 12px; text-align:left;">'+t('VOCÊ RECEBE:')+'</p>';
+  html += itemCardHtml(obj.responderItem);
+  html += '<button class="btn btn-primary" style="margin-top:16px;" onclick="confirmCreatorTrade()">✅ '+t('CONFIRMAR TROCA')+'</button>';
+  html += '<button class="btn btn-ghost" style="margin-top:8px;" onclick="renderTradeScreen()">'+t('Voltar')+'</button>';
+  html += '</div>';
+  document.getElementById('trade-content').innerHTML = html;
 }
 
-function confirmTradeAsCreator(){
-  var pc = persistent.trade.asCreator;
-  if(!pc || !pc.pendingResponse) return;
-  var myIdx = findOwnedUnitIndex(pc.offerUnit);
-  if(myIdx===-1){
-    toast('⚠️ '+t('Você não possui mais esse item. A troca foi cancelada.'));
-    persistent.trade.asCreator = null; savePersistent(); renderTradeScreen();
+function confirmCreatorTrade(){
+  var obj = tradeReviewObj;
+  var pt = persistent.pendingTrade;
+  if(!obj || !pt) return;
+  if(!ownsUnit(pt.myItem)){
+    toast(t('Você não possui mais este item. A troca foi cancelada.'));
+    persistent.pendingTrade = null; savePersistent(); renderTradeScreen(); tradeReviewObj = null;
     return;
   }
-  var theirs = pc.pendingResponse.myItem;
-  persistent.collection.owned.splice(myIdx,1);
-  persistent.collection.owned.push({ itemId:theirs.itemId, edition:theirs.edition, serial:theirs.serial });
-  var confirmCode = encodeTradeCode({ t:'trade_confirm', from:(playerName()||t('Jogador')), aItem:{ itemId:pc.offerUnit.itemId, edition:pc.offerUnit.edition, serial:pc.offerUnit.serial }, bItem:theirs });
-  persistent.trade.asCreator = null;
+  var given = pt.myItem, received = obj.responderItem;
+  removeOwnedUnitExact(given);
+  addOwnedUnit(received);
+  var finalCode = encodeTradeCode({ k:'final', id:obj.id, creatorItem:given, responderItem:received });
+  persistent.lastTradeCode = finalCode;
+  persistent.pendingTrade = null;
   savePersistent();
   playSound('achievement'); vibrate('win');
-  showTradeFinalCode(confirmCode);
-  renderTradeScreen();
+  toast('🔁 '+t('Troca concluída! Envie o código final para ')+(obj.n||'?')+t(' confirmar.'));
+  renderTradeDone(finalCode, given, received);
+  tradeReviewObj = null;
 }
 
-function showTradeFinalCode(code){
-  var html = '<div class="big-modal-icon">✅</div>';
-  html += '<div class="big-modal-title i18n">Troca confirmada!</div>';
-  html += '<p class="modal-sub i18n" style="text-align:center;">Envie este código final para a outra pessoa concluir a troca do lado dela:</p>';
-  html += '<div class="duel-code-box" id="trade-final-code">'+code+'</div>';
-  html += '<button class="btn btn-outline i18n" onclick="copyDuelCode(\'trade-final-code\')">📋 COPIAR CÓDIGO</button>';
-  html += '<button class="btn btn-ghost i18n" style="margin-top:10px;" onclick="closeModal()">Fechar</button>';
-  document.getElementById('modal-trade-picker').innerHTML = html;
-  openModal('modal-trade-picker');
-}
-
-function confirmTradeAsResponder(){
-  var pr = persistent.trade.asResponder;
-  if(!pr) return;
-  var raw = document.getElementById('trade-respond-confirm-input').value;
-  var obj = decodeTradeCode(raw, 'trade_confirm');
-  var matches = obj && obj.aItem && obj.bItem
-    && obj.bItem.itemId===pr.offerUnit.itemId && obj.bItem.edition===pr.offerUnit.edition && obj.bItem.serial===pr.offerUnit.serial
-    && obj.aItem.itemId===pr.theirItem.itemId && obj.aItem.edition===pr.theirItem.edition && obj.aItem.serial===pr.theirItem.serial;
-  if(!matches){
-    toast('⚠️ '+t('Código final inválido ou não corresponde a esta troca.'));
+function confirmResponderTrade(obj){
+  var pt = persistent.pendingTrade;
+  if(!obj || !pt) return;
+  if(!ownsUnit(pt.myItem)){
+    toast(t('Você não possui mais este item. A troca foi cancelada.'));
+    persistent.pendingTrade = null; savePersistent(); renderTradeScreen();
     return;
   }
-  var myIdx = findOwnedUnitIndex(pr.offerUnit);
-  if(myIdx===-1){
-    toast('⚠️ '+t('Você não possui mais esse item. A troca foi cancelada.'));
-    persistent.trade.asResponder = null; savePersistent(); renderTradeScreen();
-    return;
-  }
-  persistent.collection.owned.splice(myIdx,1);
-  persistent.collection.owned.push({ itemId:obj.aItem.itemId, edition:obj.aItem.edition, serial:obj.aItem.serial });
-  persistent.trade.asResponder = null;
+  var given = pt.myItem, received = obj.creatorItem;
+  removeOwnedUnitExact(given);
+  addOwnedUnit(received);
+  persistent.pendingTrade = null;
   savePersistent();
   playSound('achievement'); vibrate('win');
-  toast('✅ '+t('Troca concluída com sucesso!'));
-  renderTradeScreen();
+  toast('🔁 '+t('Troca concluída com sucesso!'));
+  renderTradeDone(null, given, received);
 }
 
-function cancelTrade(role){
-  if(role==='creator'){ persistent.trade.asCreator = null; }
-  else { persistent.trade.asResponder = null; }
+function tradeShareBoxHtml(label, code){
+  return '<div class="duel-share-block" style="display:block; margin-top:14px;">'
+       + '<div class="duel-share-title">'+label+'</div>'
+       + '<div class="duel-code-box" id="trade-share-code">'+code+'</div>'
+       + '<button class="btn btn-outline" onclick="copyDuelCode(\'trade-share-code\')">📋 '+t('COPIAR CÓDIGO')+'</button>'
+       + '</div>';
+}
+function tradePasteBoxHtml(promptLabel, placeholder){
+  return '<div style="margin-top:16px;">'
+       + '<div class="progress-section-title">'+promptLabel+'</div>'
+       + '<textarea id="trade-code-input" placeholder="'+placeholder+'" style="width:100%; min-height:56px; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:var(--mono); font-size:12px; resize:vertical;"></textarea>'
+       + '<div id="trade-action-result" style="display:none; margin:10px 0;"></div>'
+       + '<button class="btn btn-secondary" style="margin-top:8px;" onclick="previewTradeAction()">🔍 '+t('CONTINUAR')+'</button>'
+       + '</div>';
+}
+
+function renderTradeDone(code, given, received){
+  var html = '<div class="progress-section" style="padding:16px;">';
+  html += '<div class="progress-section-title">✅ '+t('Troca concluída!')+'</div>';
+  html += '<p class="modal-sub" style="margin:4px 0 12px; text-align:left;">'+t('VOCÊ OFERECEU:')+'</p>';
+  html += itemCardHtml(given);
+  html += '<div class="trade-arrow">⇅</div>';
+  html += '<p class="modal-sub" style="margin:12px 0 12px; text-align:left;">'+t('VOCÊ RECEBEU:')+'</p>';
+  html += itemCardHtml(received);
+  if(code){ html += tradeShareBoxHtml(t('Envie este código para o outro jogador confirmar:'), code); }
+  html += '<button class="btn btn-primary" style="margin-top:16px;" onclick="openCollectionScreen()">💎 '+t('VER COLEÇÃO')+'</button>';
+  html += '</div>';
+  document.getElementById('trade-content').innerHTML = html;
+}
+
+function renderTradeScreen(){
+  var pt = persistent.pendingTrade;
+  var html = '';
+  if(!pt){
+    html += '<div class="progress-section" style="padding:16px;">';
+    html += '<button class="btn btn-primary" onclick="startCreateTrade()">🆕 '+t('CRIAR TROCA')+'</button>';
+    html += '</div>';
+    if(persistent.lastTradeCode){
+      html += '<div class="progress-section" style="padding:16px;">';
+      html += tradeShareBoxHtml(t('📋 Seu último código de troca:'), persistent.lastTradeCode);
+      html += '</div>';
+    }
+    html += '<div class="progress-section" style="padding:16px;">';
+    html += '<div class="progress-section-title">🔑 '+t('Inserir código de troca')+'</div>';
+    html += tradePasteBoxHtml(t('Cole o código recebido e toque em continuar:'), t('Cole aqui o código de troca'));
+    html += '</div>';
+  } else if(pt.stage==='awaiting_counter'){
+    html += '<div class="progress-section" style="padding:16px;">';
+    html += '<div class="progress-section-title">⏳ '+t('Aguardando o outro jogador')+'</div>';
+    html += '<p class="modal-sub" style="margin:4px 0 12px; text-align:left;">'+t('VOCÊ OFERECE:')+'</p>';
+    html += itemCardHtml(pt.myItem);
+    html += tradeShareBoxHtml(t('Envie este código para o outro jogador:'), pt.code);
+    html += tradePasteBoxHtml(t('Recebeu a resposta? Cole o código aqui:'), t('Cole aqui o código de resposta'));
+    html += '<button class="btn btn-danger" style="margin-top:14px;" onclick="cancelPendingTrade()">❌ '+t('CANCELAR TROCA')+'</button>';
+    html += '</div>';
+  } else if(pt.stage==='awaiting_final'){
+    html += '<div class="progress-section" style="padding:16px;">';
+    html += '<div class="progress-section-title">⏳ '+t('Aguardando confirmação de ')+(pt.theirName||'?')+'</div>';
+    html += '<p class="modal-sub" style="margin:4px 0 12px; text-align:left;">'+t('VOCÊ OFERECE:')+'</p>';
+    html += itemCardHtml(pt.myItem);
+    html += '<div class="trade-arrow">⇅</div>';
+    html += '<p class="modal-sub" style="margin:12px 0 12px; text-align:left;">'+t('VOCÊ RECEBE:')+'</p>';
+    html += itemCardHtml(pt.theirItem);
+    html += tradeShareBoxHtml(t('Envie este código de volta para quem criou a troca:'), pt.code);
+    html += tradePasteBoxHtml(t('Recebeu a confirmação final? Cole o código aqui:'), t('Cole aqui o código final'));
+    html += '<button class="btn btn-danger" style="margin-top:14px;" onclick="cancelPendingTrade()">❌ '+t('CANCELAR TROCA')+'</button>';
+    html += '</div>';
+  }
+  document.getElementById('trade-content').innerHTML = html;
+}
+
+/* ===================== MERCADO — RUNTIME (V1.10-A3: mercado online) =====================
+   Enquanto autenticado (authUser existe), o mercado passa a usar exclusivamente as RPCs
+   create_market_listing / cancel_market_listing / buy_market_listing (ver bloco SQL "PARTE 3"
+   no final do arquivo) — nunca INSERT/UPDATE/DELETE direto em market_listings/inventory/wallets.
+   Deslogado (beta local), o comportamento antigo é mantido exatamente como estava, para não
+   quebrar quem joga sem conta. */
+var currentMarketTab = 'buy';
+var marketSellUnit = null;
+var marketPickCallback = null;
+var cloudMarketListings = [];   // cache do último loadMarketListings() (anúncios de todos, quando autenticado)
+var cloudMyListings = [];       // cache do último loadMyListings() (só os meus anúncios ativos, quando autenticado)
+var marketLoadInFlight = false;
+
+function genListingId(){ return 'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function formatGRB(n){ return Math.round(n||0).toLocaleString('pt-BR'); }
+
+// Recarrega saldo + coleção da nuvem e redesenha a tela — mesmo padrão usado em
+// syncCloudOnLogin(), reaproveitado depois de qualquer compra/venda bem-sucedida.
+async function refreshWalletAndInventoryFromCloud(){
+  if(!authUser || !supabaseClient) return;
+  try{
+    var walletRes = await supabaseClient.from('wallets').select('saldo_grb').eq('player_id', authUser.id).maybeSingle();
+    var invRes = await supabaseClient.from('inventory').select('item_id,edition,serial').eq('player_id', authUser.id);
+    var cloudGrb = (walletRes && walletRes.data) ? walletRes.data.saldo_grb : persistent.grb;
+    var cloudInventory = (invRes && Array.isArray(invRes.data)) ? invRes.data : [];
+    persistent.grb = (typeof cloudGrb==='number' && isFinite(cloudGrb)) ? cloudGrb : (persistent.grb||0);
+    persistent.collection.owned = cloudInventory.map(function(row){ return { itemId:row.item_id, edition:row.edition, serial:row.serial }; });
+    savePersistent();
+    var balEl = document.getElementById('grb-balance-value');
+    if(balEl) balEl.textContent = formatGRB(persistent.grb);
+    if(document.getElementById('collection-grid') && document.getElementById('screen-collection').classList.contains('active')) renderCollectionGrid();
+  }catch(e){ console.warn('Falha ao atualizar saldo/coleção após operação de mercado', e); }
+}
+
+// Busca todos os anúncios ativos (aba COMPRAR) direto do Supabase.
+async function loadMarketListings(){
+  if(!authUser || !supabaseClient) return [];
+  try{
+    var res = await supabaseClient
+      .from('market_listings')
+      .select('id,item_id,edition,serial,price,seller_id')
+      .eq('status','active')
+      .order('created_at', { ascending:false });
+    if(res.error){ console.warn('Falha ao carregar anúncios do mercado', res.error); return []; }
+    cloudMarketListings = (res.data||[]).map(function(row){
+      return { listingId:row.id, itemId:row.item_id, edition:row.edition, serial:row.serial, price:row.price, sellerId:row.seller_id };
+    });
+    return cloudMarketListings;
+  }catch(e){ console.warn('Falha ao carregar anúncios do mercado', e); return []; }
+}
+
+// Busca só os meus anúncios ativos (aba MEUS ANÚNCIOS) direto do Supabase.
+async function loadMyListings(){
+  if(!authUser || !supabaseClient) return [];
+  try{
+    var res = await supabaseClient
+      .from('market_listings')
+      .select('id,item_id,edition,serial,price')
+      .eq('status','active')
+      .eq('seller_id', authUser.id)
+      .order('created_at', { ascending:false });
+    if(res.error){ console.warn('Falha ao carregar meus anúncios', res.error); return []; }
+    cloudMyListings = (res.data||[]).map(function(row){
+      return { listingId:row.id, itemId:row.item_id, edition:row.edition, serial:row.serial, price:row.price };
+    });
+    return cloudMyListings;
+  }catch(e){ console.warn('Falha ao carregar meus anúncios', e); return []; }
+}
+
+// Cria um anúncio via RPC. Devolve true em sucesso, mostra o erro do Postgres em falha.
+async function createMarketListing(unit, price){
+  if(!authUser || !supabaseClient) return false;
+  try{
+    var res = await supabaseClient.rpc('create_market_listing', {
+      p_item_id: unit.itemId, p_edition: unit.edition, p_serial: unit.serial, p_price: price
+    });
+    if(res.error){ toast('⚠️ '+(res.error.message || t('Não foi possível criar o anúncio.'))); return false; }
+    return true;
+  }catch(e){ console.warn('Falha ao criar anúncio', e); toast('⚠️ '+t('Não foi possível criar o anúncio.')); return false; }
+}
+
+// Cancela um anúncio meu via RPC.
+async function cancelMarketListing(listingId){
+  if(!authUser || !supabaseClient) return false;
+  try{
+    var res = await supabaseClient.rpc('cancel_market_listing', { p_listing_id: listingId });
+    if(res.error){ toast('⚠️ '+(res.error.message || t('Não foi possível cancelar o anúncio.'))); return false; }
+    return true;
+  }catch(e){ console.warn('Falha ao cancelar anúncio', e); toast('⚠️ '+t('Não foi possível cancelar o anúncio.')); return false; }
+}
+
+// Compra um anúncio via RPC (débito, crédito e transferência do item acontecem
+// atomicamente dentro da função no Postgres — o cliente só chama e reage ao resultado).
+async function buyMarketListing(listingId){
+  if(!authUser || !supabaseClient) return false;
+  try{
+    var res = await supabaseClient.rpc('buy_market_listing', { p_listing_id: listingId });
+    if(res.error){ toast('⚠️ '+(res.error.message || t('Não foi possível concluir a compra.'))); return false; }
+    return true;
+  }catch(e){ console.warn('Falha ao comprar item', e); toast('⚠️ '+t('Não foi possível concluir a compra.')); return false; }
+}
+
+function openMarketScreen(){
+  currentMarketTab = 'buy';
+  renderMarketScreen();
+  showScreen('screen-market');
+}
+
+function switchMarketTab(tab){
+  currentMarketTab = tab;
+  renderMarketScreen();
+}
+
+function renderMarketScreen(){
+  var balEl = document.getElementById('grb-balance-value');
+  if(balEl) balEl.textContent = formatGRB(persistent.grb);
+  ['buy','items','listings'].forEach(function(tabId){
+    var el = document.getElementById('market-tab-'+tabId);
+    if(el) el.classList.toggle('active', currentMarketTab===tabId);
+  });
+  if(currentMarketTab==='buy') renderMarketBuyTab();
+  else if(currentMarketTab==='items') renderMarketItemsTab();
+  else renderMarketListingsTab();
+}
+
+function marketListingRowHtml(lst, actionHtml){
+  var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===lst.itemId; })[0];
+  if(!item) return '';
+  var rarity = RARITY_INFO[item.rarity];
+  return '<div class="market-listing">'
+       +  '<div class="ml-icon">'+item.icon+'</div>'
+       +  '<div class="ml-info"><div class="ml-name">'+t(item.name)+' <span class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</span></div>'
+       +  '<div class="ml-meta">'+t('Edição')+' '+lst.edition+' · #'+padSerial(lst.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div>'
+       +  '<div class="ml-price">🪙 '+formatGRB(lst.price)+' GRB</div></div>'
+       +  actionHtml
+       +  '</div>';
+}
+
+function renderMarketBuyTab(){
+  if(authUser && supabaseClient){
+    if(marketLoadInFlight) return;
+    marketLoadInFlight = true;
+    var contentEl = document.getElementById('market-content');
+    if(contentEl) contentEl.innerHTML = '<div class="market-empty">'+t('Carregando...')+'</div>';
+    loadMarketListings().then(function(listings){
+      marketLoadInFlight = false;
+      if(currentMarketTab!=='buy') return; // usuário já trocou de aba enquanto carregava
+      var html = '';
+      if(!listings.length){
+        html = '<div class="market-empty">'+t('Nenhum item à venda no momento. Venda algo em MEUS ITENS!')+'</div>';
+      } else {
+        listings.forEach(function(lst){
+          var isMine = lst.sellerId===authUser.id;
+          var action = isMine
+            ? '<button class="btn btn-outline btn-sm" disabled>'+t('SEU ANÚNCIO')+'</button>'
+            : '<button class="btn btn-primary btn-sm" onclick="buyListing(\''+lst.listingId+'\')">'+t('COMPRAR')+'</button>';
+          html += marketListingRowHtml(lst, action);
+        });
+      }
+      var el = document.getElementById('market-content');
+      if(el) el.innerHTML = html;
+    });
+    return;
+  }
+  // BETA local (deslogado): comportamento original, sem chamadas de rede.
+  var listings = persistent.marketListings;
+  var html = '';
+  if(!listings.length){
+    html = '<div class="market-empty">'+t('Nenhum item à venda no momento. Venda algo em MEUS ITENS!')+'</div>';
+  } else {
+    listings.forEach(function(lst){
+      var action = '<button class="btn btn-primary btn-sm" onclick="buyListing(\''+lst.listingId+'\')">'+t('COMPRAR')+'</button>';
+      html += marketListingRowHtml(lst, action);
+    });
+  }
+  document.getElementById('market-content').innerHTML = html;
+}
+
+function renderMarketItemsTab(){
+  // Igual para logado/deslogado: sempre lista a partir de persistent.collection.owned,
+  // que já reflete a nuvem (via syncCloudOnLogin/refreshWalletAndInventoryFromCloud)
+  // quando autenticado.
+  var owned = persistent.collection.owned;
+  var html = '';
+  if(!owned.length){
+    html = '<div class="market-empty">'+t('Você ainda não possui itens colecionáveis.')+'</div>';
+  } else {
+    owned.forEach(function(unit, idx){
+      var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===unit.itemId; })[0];
+      if(!item) return;
+      var rarity = RARITY_INFO[item.rarity];
+      html += '<div class="market-listing">'
+           +  '<div class="ml-icon">'+item.icon+'</div>'
+           +  '<div class="ml-info"><div class="ml-name">'+t(item.name)+' <span class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</span></div>'
+           +  '<div class="ml-meta">'+t('Edição')+' '+unit.edition+' · #'+padSerial(unit.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div></div>'
+           +  '<button class="btn btn-outline btn-sm" onclick="openSellPriceModal('+idx+')">'+t('VENDER')+'</button>'
+           +  '</div>';
+    });
+  }
+  document.getElementById('market-content').innerHTML = html;
+}
+
+function renderMarketListingsTab(){
+  if(authUser && supabaseClient){
+    if(marketLoadInFlight) return;
+    marketLoadInFlight = true;
+    var contentEl = document.getElementById('market-content');
+    if(contentEl) contentEl.innerHTML = '<div class="market-empty">'+t('Carregando...')+'</div>';
+    loadMyListings().then(function(listings){
+      marketLoadInFlight = false;
+      if(currentMarketTab!=='listings') return;
+      var html = '';
+      if(!listings.length){
+        html = '<div class="market-empty">'+t('Você não tem anúncios ativos.')+'</div>';
+      } else {
+        listings.forEach(function(lst){
+          var action = '<button class="btn btn-danger btn-sm" onclick="cancelListing(\''+lst.listingId+'\')">'+t('CANCELAR')+'</button>';
+          html += marketListingRowHtml(lst, action);
+        });
+      }
+      var el = document.getElementById('market-content');
+      if(el) el.innerHTML = html;
+    });
+    return;
+  }
+  // BETA local (deslogado): comportamento original.
+  var listings = persistent.marketListings;
+  var html = '';
+  if(!listings.length){
+    html = '<div class="market-empty">'+t('Você não tem anúncios ativos.')+'</div>';
+  } else {
+    listings.forEach(function(lst){
+      var action = '<button class="btn btn-danger btn-sm" onclick="cancelListing(\''+lst.listingId+'\')">'+t('CANCELAR')+'</button>';
+      html += marketListingRowHtml(lst, action);
+    });
+  }
+  document.getElementById('market-content').innerHTML = html;
+}
+
+function openSellPriceModal(idx){
+  var unit = persistent.collection.owned[idx];
+  if(!unit || !ownsUnit(unit)) return;
+  marketSellUnit = unit;
+  var html = '<h2>'+t('Vender item')+'</h2>';
+  html += itemCardHtml(unit);
+  html += '<p class="modal-sub" style="margin:14px 0 8px; text-align:center;">'+t('Preço em GRB:')+'</p>';
+  html += '<input type="number" inputmode="numeric" min="1" step="1" id="market-sell-price" class="grb-input" placeholder="'+t('Ex: 50')+'">';
+  html += '<button class="btn btn-primary" style="margin-top:14px;" onclick="confirmSellListing()">🏷️ '+t('ANUNCIAR')+'</button>';
+  html += '<button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal()">'+t('Cancelar')+'</button>';
+  document.getElementById('modal-market-sell').innerHTML = html;
+  openModal('modal-market-sell');
+}
+
+function confirmSellListing(){
+  var unit = marketSellUnit;
+  if(!unit) return;
+  if(!ownsUnit(unit)){ toast(t('Você não possui mais este item.')); closeModal(); marketSellUnit=null; renderMarketScreen(); return; }
+  var input = document.getElementById('market-sell-price');
+  var price = input ? parseInt(input.value, 10) : NaN;
+  if(!price || price<=0 || !isFinite(price)){ toast(t('Informe um preço válido em GRB.')); return; }
+  if(price>500000){ toast(t('Preço máximo permitido: 500.000 GRB.')); return; }
+
+  if(authUser && supabaseClient){
+    // Caminho online: nunca mexe no estado local antes da confirmação do servidor.
+    createMarketListing(unit, price).then(function(ok){
+      if(!ok) return;
+      closeModal();
+      toast('🏷️ '+t('Item anunciado no mercado!'));
+      marketSellUnit = null;
+      currentMarketTab = 'listings';
+      refreshWalletAndInventoryFromCloud().then(renderMarketScreen);
+    });
+    return;
+  }
+
+  // BETA local (deslogado): comportamento original, inalterado.
+  removeOwnedUnitExact(unit);
+  persistent.marketListings.push({ listingId:genListingId(), itemId:unit.itemId, edition:unit.edition, serial:unit.serial, price:price, sellerName:(playerName()||t('Jogador')) });
   savePersistent();
-  renderTradeScreen();
-  toast(t('Troca cancelada.'));
+  closeModal();
+  toast('🏷️ '+t('Item anunciado no mercado!'));
+  marketSellUnit = null;
+  currentMarketTab = 'listings';
+  renderMarketScreen();
+}
+
+function cancelListing(listingId){
+  if(authUser && supabaseClient){
+    cancelMarketListing(listingId).then(function(ok){
+      if(!ok) return;
+      toast('↩️ '+t('Anúncio cancelado. Item devolvido à sua coleção.'));
+      refreshWalletAndInventoryFromCloud().then(renderMarketScreen);
+    });
+    return;
+  }
+
+  // BETA local (deslogado): comportamento original, inalterado.
+  var listings = persistent.marketListings;
+  var idx = -1;
+  for(var i=0;i<listings.length;i++){ if(listings[i].listingId===listingId){ idx=i; break; } }
+  if(idx===-1) return;
+  var lst = listings[idx];
+  listings.splice(idx,1);
+  addOwnedUnit({ itemId:lst.itemId, edition:lst.edition, serial:lst.serial });
+  savePersistent();
+  toast('↩️ '+t('Anúncio cancelado. Item devolvido à sua coleção.'));
+  renderMarketScreen();
+}
+
+function buyListing(listingId){
+  if(authUser && supabaseClient){
+    buyMarketListing(listingId).then(function(ok){
+      if(!ok){ renderMarketScreen(); return; } // pode ter deixado de estar disponível: recarrega a lista
+      playSound('achievement'); vibrate('win');
+      toast('🏪 '+t('Item comprado com sucesso!'));
+      refreshWalletAndInventoryFromCloud().then(renderMarketScreen);
+    });
+    return;
+  }
+
+  // BETA local (deslogado): comportamento original, inalterado.
+  var listings = persistent.marketListings;
+  var idx = -1;
+  for(var i=0;i<listings.length;i++){ if(listings[i].listingId===listingId){ idx=i; break; } }
+  if(idx===-1){ toast(t('Este item não está mais disponível.')); renderMarketScreen(); return; }
+  var lst = listings[idx];
+  if(persistent.grb < lst.price){ toast(t('Saldo de GRB insuficiente.')); return; }
+  applyGRBDelta(-lst.price);   // comprador paga
+  applyGRBDelta(lst.price);    // vendedor recebe (BETA local: comprador e vendedor compartilham o mesmo saldo)
+  listings.splice(idx,1);
+  addOwnedUnit({ itemId:lst.itemId, edition:lst.edition, serial:lst.serial });
+  savePersistent();
+  playSound('achievement'); vibrate('win');
+  toast('🏪 '+t('Item comprado com sucesso!'));
+  renderMarketScreen();
 }
 
 /* ===================== SAVE SYSTEM ===================== */
@@ -3227,7 +3977,11 @@ function loadPersistent(){
       pendingBonus: loaded.pendingBonus || null,
       lastChallengeCode: loaded.lastChallengeCode || null,
       collection: { owned: (loaded.collection && Array.isArray(loaded.collection.owned)) ? loaded.collection.owned : [] },
-      trade: { asCreator: (loaded.trade && loaded.trade.asCreator) || null, asResponder: (loaded.trade && loaded.trade.asResponder) || null }
+      pendingTrade: loaded.pendingTrade || null,
+      lastTradeCode: loaded.lastTradeCode || null,
+      grb: (typeof loaded.grb==='number' && isFinite(loaded.grb)) ? loaded.grb : def.grb,
+      marketListings: Array.isArray(loaded.marketListings) ? loaded.marketListings : [],
+      syncedAccountId: loaded.syncedAccountId || null
     };
   }catch(e){ persistent = defaultPersistent(); }
 }
@@ -3295,19 +4049,32 @@ function playSound(type){
    positiva às decisões financeiras sem cansar ou distrair. */
 var MusicSys = (function(){
   var mctx = null, master = null, warmFilter = null, playing = false, schedulerTimer = null;
-  var nextChordTime = 0, chordIndex = 0, noiseBuffer = null;
+  var nextBarTime = 0, barIndex = 0, noiseBuffer = null;
   var lookahead = 0.25, scheduleAheadTime = 2.2;
 
-  // Progressão de 4 acordes maiores e brilhantes (Cmaj9 – G6 – Am7 – Fmaj7), em ritmo ágil.
-  var PROGRESSION = [
-    { notes:[130.81,164.81,196.00,293.66], dur:4.2, bass:65.41 },
-    { notes:[98.00, 146.83,196.00,220.00], dur:4.2, bass:98.00 },
-    { notes:[110.00,164.81,220.00,261.63], dur:4.2, bass:110.00 },
-    { notes:[87.31, 130.81,174.61,220.00], dur:4.2, bass:87.31 }
+  // Tema autoral "Get Rich or Go Broke" — 120 BPM, tom de Dó Maior.
+  var BPM = 120, BEAT = 60/BPM, BAR = BEAT*4, STEP = BAR/8; // beat=0.5s | compasso=2s | passo=0.25s
+
+  var N = {
+    F2:87.31, G2:98.00, A2:110.00,
+    C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, B3:246.94,
+    C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, B4:493.88,
+    C5:523.25
+  };
+
+  // Melodia principal original, inspirada no motivo fornecido (C-E-G-A | G-E-D-E | C-E-G-B | A-G-E-D)
+  var PHRASE_A = [ ['C4','E4','G4','A4'], ['G4','E4','D4','E4'], ['C4','E4','G4','B4'], ['A4','G4','E4','D4'] ];
+  // Segunda variação (E-G-A-G | E-D-E-G), estendida em resposta e resolvendo na tônica
+  var PHRASE_B = [ ['E4','G4','A4','G4'], ['E4','D4','E4','G4'], ['E4','G4','A4','B4'], ['G4','E4','D4','C4'] ];
+  var MELODY = PHRASE_A.concat(PHRASE_B); // 8 compassos — um "refrão" completo
+
+  // Harmonia simples e alegre (I–V–vi–IV em Dó Maior), 2 compassos por acorde
+  var CHORD_BLOCKS = [
+    { notes:[N.C4,N.E4,N.G4], root:N.C3 },
+    { notes:[N.G3,N.B3,N.D4], root:N.G2 },
+    { notes:[N.A3,N.C4,N.E4], root:N.A2 },
+    { notes:[N.F3,N.A3,N.C4], root:N.F2 }
   ];
-  var arpPattern = [0,1,2,3,2,1,3,2];
-  // Bateria autoral (sintetizada, sem amostras) — groove alegre de 8 tempos por acorde.
-  var drumPattern = { kick:[0,3,6], hat:[0,1,2,3,4,5,6,7], snap:[4] };
 
   function getNoiseBuffer(){
     if(!noiseBuffer){
@@ -3375,25 +4142,25 @@ var MusicSys = (function(){
     return mctx;
   }
 
-  function playPad(chord, startTime){
-    chord.notes.forEach(function(freq){
+  function playChordPad(notes, startTime, dur){
+    notes.forEach(function(freq){
       var o1 = mctx.createOscillator(), o2 = mctx.createOscillator(), g = mctx.createGain();
       o1.type = 'triangle'; o2.type = 'sine';
       o1.frequency.value = freq; o2.frequency.value = freq*1.006;
       g.gain.setValueAtTime(0.0001, startTime);
       g.gain.linearRampToValueAtTime(0.05, startTime+0.7);
-      g.gain.linearRampToValueAtTime(0.0001, startTime+chord.dur);
+      g.gain.linearRampToValueAtTime(0.0001, startTime+dur);
       o1.connect(g); o2.connect(g); g.connect(master);
       o1.start(startTime); o2.start(startTime);
-      o1.stop(startTime+chord.dur+0.3); o2.stop(startTime+chord.dur+0.3);
+      o1.stop(startTime+dur+0.3); o2.stop(startTime+dur+0.3);
     });
   }
 
-  function playBassPluck(freq, startTime, dur){
+  function playBassPluck(freq, startTime, dur, vol){
     var o = mctx.createOscillator(), g = mctx.createGain();
     o.type = 'triangle'; o.frequency.value = freq;
     g.gain.setValueAtTime(0.0001, startTime);
-    g.gain.linearRampToValueAtTime(0.08, startTime+0.03);
+    g.gain.linearRampToValueAtTime(vol||0.08, startTime+0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, startTime+dur);
     o.connect(g); g.connect(master);
     o.start(startTime); o.stop(startTime+dur+0.05);
@@ -3409,32 +4176,77 @@ var MusicSys = (function(){
     o.start(startTime); o.stop(startTime+dur+0.05);
   }
 
+  // Voz principal (synth/pluck brilhante) — carrega o motivo melódico original.
+  function playLeadNote(freq, startTime, dur){
+    var o1 = mctx.createOscillator(), o2 = mctx.createOscillator(), g = mctx.createGain(), g2 = mctx.createGain();
+    o1.type = 'triangle'; o2.type = 'square';
+    o1.frequency.value = freq; o2.frequency.value = freq;
+    g2.gain.value = 0.16;
+    g.gain.setValueAtTime(0.0001, startTime);
+    g.gain.linearRampToValueAtTime(0.12, startTime+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, startTime+dur);
+    o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(master);
+    o1.start(startTime); o2.start(startTime);
+    o1.stop(startTime+dur+0.05); o2.stop(startTime+dur+0.05);
+  }
+
+  // Pequeno efeito sonoro musical discreto — marca a entrada do groove completo.
+  function playSparkle(startTime){
+    [1046.50,1318.51,1567.98].forEach(function(freq, i){
+      var t = startTime + i*0.09;
+      var o = mctx.createOscillator(), g = mctx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.035, t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+0.3);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t+0.35);
+    });
+  }
+
   function scheduleNext(){
-    while(nextChordTime < mctx.currentTime + scheduleAheadTime){
-      var chord = PROGRESSION[chordIndex % PROGRESSION.length];
-      playPad(chord, nextChordTime);
-      if(chord.bass){ playBassPluck(chord.bass, nextChordTime, 0.55); playBassPluck(chord.bass, nextChordTime+chord.dur/2, 0.55); }
-      arpPattern.forEach(function(degree, i){
-        var noteTime = nextChordTime + 0.4 + i*((chord.dur-0.6)/arpPattern.length);
-        if(Math.random() < 0.85){ playArpNote(chord.notes[degree % chord.notes.length], noteTime, 0.5); }
+    while(nextBarTime < mctx.currentTime + scheduleAheadTime){
+      var bar = barIndex % 32;          // loop completo de 32 compassos (~64s a 120bpm)
+      var pass = Math.floor(bar/8);     // 4 blocos de 8 compassos — arranjo cresce a cada passagem
+      var barInPhrase = bar % 8;
+      var melodyNotes = MELODY[barInPhrase];
+      var chord = CHORD_BLOCKS[Math.floor(barInPhrase/2)];
+
+      if(bar===16){ playSparkle(nextBarTime); } // sparkle discreto ao entrar no groove completo
+
+      if(barInPhrase%2===0){ playChordPad(chord.notes, nextBarTime, BAR*2); }
+
+      melodyNotes.forEach(function(noteName, i){
+        playLeadNote(N[noteName], nextBarTime + i*BEAT, BEAT*0.88);
       });
-      var stepDur = chord.dur/8;
-      for(var s=0;s<8;s++){
-        var stepTime = nextChordTime + s*stepDur;
-        if(drumPattern.kick.indexOf(s)!==-1){ playKick(stepTime); }
-        if(drumPattern.hat.indexOf(s)!==-1){ playHat(stepTime, s%2===0); }
-        if(drumPattern.snap.indexOf(s)!==-1){ playSnap(stepTime); }
+
+      if(pass>=3){
+        playArpNote(chord.notes[barInPhrase % chord.notes.length], nextBarTime + BEAT*0.5, BEAT*0.4);
       }
-      nextChordTime += chord.dur;
-      chordIndex++;
+
+      if(pass>=1){
+        playBassPluck(chord.root,     nextBarTime + 0*STEP, 0.32, 0.09);
+        playBassPluck(chord.root*2,   nextBarTime + 3*STEP, 0.16, 0.05);
+        playBassPluck(chord.root*1.5, nextBarTime + 4*STEP, 0.28, 0.08);
+        playBassPluck(chord.root,     nextBarTime + 6*STEP, 0.22, 0.07);
+      }
+
+      if(pass>=2){
+        playKick(nextBarTime + 0*STEP); playKick(nextBarTime + 4*STEP);
+        for(var s=0;s<8;s++){ playHat(nextBarTime + s*STEP, s%4===0); }
+        playSnap(nextBarTime + 2*STEP); playSnap(nextBarTime + 6*STEP);
+      }
+
+      nextBarTime += BAR;
+      barIndex++;
     }
   }
 
   function start(){
     if(playing || !ensureCtx()) return;
     playing = true;
-    nextChordTime = mctx.currentTime + 0.2;
-    chordIndex = 0;
+    nextBarTime = mctx.currentTime + 0.2;
+    barIndex = 0;
     master.gain.cancelScheduledValues(mctx.currentTime);
     master.gain.setValueAtTime(master.gain.value, mctx.currentTime);
     master.gain.linearRampToValueAtTime(1, mctx.currentTime+2.5);
@@ -3509,6 +4321,7 @@ function init(){
   applyTranslations();
   refreshMenuButtons();
   showScreen('screen-splash');
+  initAuth();
   document.body.addEventListener('click', function(){
     ensureAudio();
     if(persistent.settings.music){ MusicSys.start(); }
@@ -3516,6 +4329,420 @@ function init(){
 }
 
 if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
+
+/* ============================================================================
+   SUPABASE — SCHEMA BASE (PARTE 1 de 2 — rode este bloco primeiro)
+   ============================================================================
+   Isto é SQL, não JavaScript — o jogo não executa este bloco. Copie e rode
+   uma vez no seu projeto Supabase, em SQL Editor, depois de preencher
+   SUPABASE_URL e SUPABASE_ANON_KEY no topo deste arquivo.
+
+   Estruturas mínimas: jogadores, carteira (saldo_grb) e inventário, usando os
+   mesmos IDs já usados pelo jogo (item_id = COLLECTIBLES_CATALOG[].id,
+   edition/serial = mesmos campos de persistent.collection.owned[]).
+
+   RLS (Row Level Security) garante que cada jogador só acessa os PRÓPRIOS
+   dados — a segurança fica no banco, não depende do JavaScript do navegador.
+   Nenhuma tabela ou coluna de mercado/preço/histórico é criada nesta etapa.
+
+-- ---------------------------------------------------------------------------
+-- 1) Tabela de jogadores
+create table if not exists public.players (
+  id uuid primary key references auth.users(id) on delete cascade,
+  nickname text not null,
+  created_at timestamptz not null default now()
+);
+
+-- 2) Tabela de carteira (saldo em GRB, a moeda persistente do jogo)
+create table if not exists public.wallets (
+  player_id uuid primary key references public.players(id) on delete cascade,
+  saldo_grb integer not null default 0
+);
+
+-- 3) Tabela de inventário (itens colecionáveis)
+create table if not exists public.inventory (
+  id bigint generated always as identity primary key,
+  player_id uuid not null references public.players(id) on delete cascade,
+  item_id text not null,      -- mesmo id de COLLECTIBLES_CATALOG no jogo
+  edition integer,            -- mesmo campo "edition" usado localmente
+  serial integer,             -- mesmo campo "serial" usado localmente
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- Row Level Security — cada jogador só enxerga/altera os PRÓPRIOS dados
+alter table public.players   enable row level security;
+alter table public.wallets   enable row level security;
+alter table public.inventory enable row level security;
+
+-- players: o próprio jogador pode ler e criar sua linha (id = auth.uid())
+create policy "players_select_own" on public.players
+  for select using (auth.uid() = id);
+create policy "players_insert_own" on public.players
+  for insert with check (auth.uid() = id);
+create policy "players_update_own" on public.players
+  for update using (auth.uid() = id);
+
+-- wallets: o próprio jogador pode ler/criar/atualizar só a própria carteira
+create policy "wallets_select_own" on public.wallets
+  for select using (auth.uid() = player_id);
+create policy "wallets_insert_own" on public.wallets
+  for insert with check (auth.uid() = player_id);
+create policy "wallets_update_own" on public.wallets
+  for update using (auth.uid() = player_id);
+
+-- inventory: o próprio jogador pode ler/criar/apagar só os próprios itens
+create policy "inventory_select_own" on public.inventory
+  for select using (auth.uid() = player_id);
+create policy "inventory_insert_own" on public.inventory
+  for insert with check (auth.uid() = player_id);
+create policy "inventory_delete_own" on public.inventory
+  for delete using (auth.uid() = player_id);
+
+   Nenhum jogador consegue ler, alterar ou apagar dados de outro — mesmo que
+   tente manipular as chamadas do navegador, porque o Postgres recusa a
+   operação no próprio banco (RLS), não apenas na UI.
+
+   Este bloco (Parte 1) só cria as tabelas e a leitura/escrita básica por
+   dono da linha. A sincronização real de saldo/inventário e o bloqueio
+   contra valores arbitrários vêm da PARTE 2, logo abaixo — rode as duas.
+   ============================================================================ */
+
+/* ============================================================================
+   SUPABASE — SEGURANÇA E SINCRONIZAÇÃO (PARTE 2 de 2 — rode depois da Parte 1)
+   ============================================================================
+   Isto também é SQL — rode este bloco INTEIRO uma vez no SQL Editor do seu
+   projeto Supabase, DEPOIS de já ter rodado o bloco "Parte 1" acima.
+
+   PROBLEMA que este bloco resolve: as policies de UPDATE em "wallets" e de
+   INSERT em "inventory" da Parte 1 permitiam que o próprio jogador,
+   editando o JavaScript do navegador, mandasse QUALQUER valor de saldo ou
+   QUALQUER item_id direto para o banco (RLS só valida De QUEM é a linha,
+   não O QUE está sendo escrito nela).
+
+   A partir daqui, o navegador NUNCA escreve saldo/itens diretamente:
+   ele só pode chamar duas funções (RPC) abaixo, que validam e aplicam a
+   alteração dentro do próprio Postgres (SECURITY DEFINER). O jogo em si
+   (script.js) já foi atualizado para usar exclusivamente essas funções.
+
+-- ---------------------------------------------------------------------------
+-- 1) Catálogo de itens válidos — trava contra criação de itens arbitrários.
+--    Precisa bater com COLLECTIBLES_CATALOG no início do <script> do jogo.
+create table if not exists public.collectible_catalog (
+  item_id text primary key
+);
+insert into public.collectible_catalog (item_id) values
+  ('moeda_buzios'), ('cedula_sortuda'), ('grafico_dourado'), ('cofre_antigo'),
+  ('maleta_exec'), ('cartola'), ('diamante_bruto'), ('trofeu_ouro'),
+  ('coroa_real'), ('foguete_sucesso')
+on conflict (item_id) do nothing;
+
+-- 2) Flag de migração única (item 2 do pedido: migrar dados locais só 1 vez,
+--    por CONTA — vale para qualquer dispositivo que fizer login depois).
+alter table public.players add column if not exists migrated boolean not null default false;
+
+-- 3) FK de inventory.item_id para o catálogo — mesmo que alguém tente inserir
+--    direto (o que já não será mais possível após o passo 5), o banco recusa
+--    qualquer item_id que não exista no catálogo oficial.
+alter table public.inventory
+  add constraint inventory_item_id_fkey
+  foreign key (item_id) references public.collectible_catalog(item_id)
+  on delete restrict;
+
+-- ---------------------------------------------------------------------------
+-- 4) Funções seguras (SECURITY DEFINER): o navegador só pode pedir
+--    "some/subtraia este valor" ou "conceda este item específico do
+--    catálogo", nunca "defina o saldo como X" ou "crie este item qualquer".
+
+-- 4a) Aplica uma VARIAÇÃO (delta) no saldo GRB do jogador autenticado.
+--     Nunca aceita saldo negativo; cria a carteira automaticamente se faltar.
+create or replace function public.grb_apply_delta(p_delta integer)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_new integer;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated';
+  end if;
+  -- limite de sanidade por chamada: evita que uma única chamada destrua a economia
+  if p_delta > 100000 or p_delta < -100000 then
+    raise exception 'delta fora do intervalo permitido';
+  end if;
+
+  insert into public.wallets (player_id, saldo_grb)
+  values (v_uid, 0)
+  on conflict (player_id) do nothing;
+
+  update public.wallets
+    set saldo_grb = greatest(0, saldo_grb + p_delta)
+    where player_id = v_uid
+    returning saldo_grb into v_new;
+
+  return v_new;
+end;
+$$;
+
+-- 4b) Concede UM item do catálogo oficial ao jogador autenticado.
+--     Recusa qualquer item_id que não exista em collectible_catalog.
+create or replace function public.grant_collectible_item(p_item_id text, p_edition integer, p_serial integer)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'not authenticated';
+  end if;
+  if not exists (select 1 from public.collectible_catalog where item_id = p_item_id) then
+    raise exception 'item_id inválido: %', p_item_id;
+  end if;
+
+  insert into public.inventory (player_id, item_id, edition, serial)
+  values (v_uid, p_item_id, p_edition, p_serial);
+end;
+$$;
+
+-- Só usuários autenticados podem chamar as funções (execução em si ainda
+-- respeita auth.uid() dentro da função, isto só libera a chamada da RPC).
+grant execute on function public.grb_apply_delta(integer) to authenticated;
+grant execute on function public.grant_collectible_item(text, integer, integer) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 5) Remove as policies que permitiam escrita DIRETA (sem validação de valor)
+--    em wallets/inventory. Dali em diante, toda alteração passa pelas funções
+--    acima. Leitura (select) continua permitida normalmente para sincronizar
+--    ao entrar/recarregar a página. Delete de inventory continua permitido
+--    (remover um item próprio não cria valor nem viola nada).
+drop policy if exists "wallets_update_own" on public.wallets;
+drop policy if exists "wallets_insert_own" on public.wallets;
+drop policy if exists "inventory_insert_own" on public.inventory;
+
+-- players: também permite ao próprio jogador marcar a migração como concluída.
+create policy "players_update_own_v2" on public.players
+  for update using (auth.uid() = id);
+
+/* Resultado: um jogador autenticado pode ganhar dinheiro/itens apenas através
+   das ações reais do jogo (que chamam grb_apply_delta / grant_collectible_item),
+   nunca digitando um valor arbitrário direto no console do navegador — a
+   validação final mora no Postgres, não no JavaScript.
+   ============================================================================ */
+
+/* ============================================================================
+   SUPABASE — MERCADO ENTRE JOGADORES (PARTE 3 de 3 — rode depois das Partes 1 e 2)
+   ============================================================================
+   SQL — rode este bloco INTEIRO uma vez no SQL Editor do seu projeto Supabase,
+   depois de já ter rodado as Partes 1 e 2 acima.
+
+   O que este bloco cria: uma única tabela nova (market_listings) e três funções
+   RPC (SECURITY DEFINER) que são o ÚNICO jeito de escrever nela ou de mover
+   GRB/itens entre jogadores por causa de uma venda. O navegador nunca faz
+   INSERT/UPDATE/DELETE direto em market_listings, wallets ou inventory para
+   isso — só chama create_market_listing / cancel_market_listing /
+   buy_market_listing, e o Postgres valida tudo (posse real, saldo, preço,
+   duplicidade) antes de aplicar qualquer mudança.
+
+-- ---------------------------------------------------------------------------
+-- 1) Tabela de anúncios do mercado.
+--    item_id/edition/serial ficam denormalizados aqui só para leitura fácil
+--    (evita um JOIN em inventory pra listar a aba COMPRAR); a fonte de
+--    verdade de posse continua sendo a linha real em inventory (inventory_id).
+create table if not exists public.market_listings (
+  id bigint generated always as identity primary key,
+  inventory_id bigint not null references public.inventory(id) on delete cascade,
+  seller_id uuid not null references public.players(id) on delete cascade,
+  item_id text not null,
+  edition integer,
+  serial integer,
+  price integer not null check (price > 0 and price <= 500000),
+  status text not null default 'active' check (status in ('active','sold','cancelled')),
+  buyer_id uuid references public.players(id),
+  created_at timestamptz not null default now(),
+  sold_at timestamptz
+);
+
+-- Impede fisicamente que a MESMA linha de inventory tenha dois anúncios ativos
+-- ao mesmo tempo — a segunda tentativa de INSERT falha no próprio banco,
+-- independente do que o JavaScript mandar.
+create unique index if not exists market_listings_one_active_per_item
+  on public.market_listings (inventory_id) where (status = 'active');
+
+create index if not exists market_listings_active_idx
+  on public.market_listings (created_at desc) where (status = 'active');
+
+-- ---------------------------------------------------------------------------
+-- 2) RLS — leitura pública dos anúncios ativos + dos próprios (como vendedor
+--    ou comprador, mesmo depois de vendidos/cancelados, para histórico).
+--    Nenhuma policy de INSERT/UPDATE/DELETE para o usuário comum: com RLS
+--    ligado e sem essas policies, qualquer escrita direta na tabela é
+--    recusada por padrão — toda escrita só acontece dentro das RPCs abaixo.
+alter table public.market_listings enable row level security;
+
+create policy "market_listings_select" on public.market_listings
+  for select using (status = 'active' or seller_id = auth.uid() or buyer_id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- 3) RPCs (SECURITY DEFINER). Nenhuma delas chama grb_apply_delta ou
+--    grant_collectible_item internamente — mexem direto nas tabelas porque
+--    já são SECURITY DEFINER e podem precisar mover valores maiores que o
+--    limite de ±100000 por chamada daquelas funções genéricas.
+
+-- 3a) Anuncia um item à venda. Resolve a linha real de inventory a partir da
+--     tripla (item_id, edition, serial) + auth.uid() — nunca confia em um
+--     inventory_id que o navegador possa enviar.
+create or replace function public.create_market_listing(
+  p_item_id text, p_edition integer, p_serial integer, p_price integer
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_inventory_id bigint;
+  v_listing_id bigint;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated';
+  end if;
+  if p_price is null or p_price <= 0 or p_price > 500000 then
+    raise exception 'preço inválido';
+  end if;
+  if not exists (select 1 from public.collectible_catalog where item_id = p_item_id) then
+    raise exception 'item_id inválido: %', p_item_id;
+  end if;
+
+  -- Posse real: a linha precisa existir, pertencer a quem está chamando, e
+  -- ainda não estar anunciada (a unique index parcial garante isso no INSERT,
+  -- mas checar aqui também dá uma mensagem de erro melhor que a constraint crua).
+  select id into v_inventory_id
+    from public.inventory
+   where player_id = v_uid and item_id = p_item_id and edition = p_edition and serial = p_serial
+   limit 1;
+
+  if v_inventory_id is null then
+    raise exception 'você não possui este item';
+  end if;
+
+  if exists (select 1 from public.market_listings where inventory_id = v_inventory_id and status = 'active') then
+    raise exception 'este item já está anunciado';
+  end if;
+
+  insert into public.market_listings (inventory_id, seller_id, item_id, edition, serial, price)
+  values (v_inventory_id, v_uid, p_item_id, p_edition, p_serial, p_price)
+  returning id into v_listing_id;
+
+  return v_listing_id;
+end;
+$$;
+
+-- 3b) Cancela meu próprio anúncio ativo. Não mexe em inventory: o item nunca
+--     saiu de lá, então "cancelar" é só desativar o anúncio.
+create or replace function public.cancel_market_listing(p_listing_id bigint)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_rows integer;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated';
+  end if;
+
+  update public.market_listings
+     set status = 'cancelled'
+   where id = p_listing_id and seller_id = v_uid and status = 'active';
+
+  get diagnostics v_rows = row_count;
+  if v_rows = 0 then
+    raise exception 'anúncio não encontrado ou já não está mais ativo';
+  end if;
+end;
+$$;
+
+-- 3c) Compra um anúncio ativo: valida saldo e posse do vendedor, marca o
+--     anúncio como vendido (UPDATE condicional — ver comentário abaixo),
+--     debita comprador, credita vendedor e transfere a linha de inventory,
+--     tudo em uma única transação (a função inteira é atômica).
+create or replace function public.buy_market_listing(p_listing_id bigint)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_listing record;
+  v_buyer_balance integer;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated';
+  end if;
+
+  -- UPDATE condicional: o Postgres trava a linha aqui. Se dois compradores
+  -- tentarem ao mesmo tempo, a segunda transação espera a primeira terminar,
+  -- reavalia status='active' (já é false) e atualiza zero linhas — detectado
+  -- logo abaixo, desfazendo tudo o que essa chamada tinha feito até aqui.
+  update public.market_listings
+     set status = 'sold', buyer_id = v_uid, sold_at = now()
+   where id = p_listing_id and status = 'active'
+  returning * into v_listing;
+
+  if v_listing.id is null then
+    raise exception 'este item não está mais disponível';
+  end if;
+
+  if v_listing.seller_id = v_uid then
+    raise exception 'você não pode comprar seu próprio anúncio';
+  end if;
+
+  -- Revalida que o vendedor ainda possui a linha (ex.: o sistema de Trocas,
+  -- que não passa por estas RPCs, poderia teoricamente ter movido o item por
+  -- outro caminho — ver limitação conhecida nas notas de Fase 1).
+  if not exists (
+    select 1 from public.inventory
+     where id = v_listing.inventory_id and player_id = v_listing.seller_id
+  ) then
+    raise exception 'item não está mais disponível';
+  end if;
+
+  select saldo_grb into v_buyer_balance from public.wallets where player_id = v_uid;
+  if v_buyer_balance is null or v_buyer_balance < v_listing.price then
+    raise exception 'saldo de GRB insuficiente';
+  end if;
+
+  update public.wallets set saldo_grb = saldo_grb - v_listing.price where player_id = v_uid;
+
+  insert into public.wallets (player_id, saldo_grb)
+  values (v_listing.seller_id, v_listing.price)
+  on conflict (player_id) do update set saldo_grb = public.wallets.saldo_grb + v_listing.price;
+
+  update public.inventory set player_id = v_uid where id = v_listing.inventory_id;
+end;
+$$;
+
+grant execute on function public.create_market_listing(text, integer, integer, integer) to authenticated;
+grant execute on function public.cancel_market_listing(bigint) to authenticated;
+grant execute on function public.buy_market_listing(bigint) to authenticated;
+
+/* Resultado: um jogador autenticado só pode anunciar itens que realmente
+   possui, nunca dois anúncios ativos para o mesmo item, nunca compra em
+   duplicidade (a segunda tentativa concorrente falha com "não está mais
+   disponível"), e o dinheiro/item só troca de dono se as duas pernas da
+   operação (débito+crédito+transferência) forem confirmadas juntas dentro
+   da mesma transação no Postgres.
+   ============================================================================ */
 </script>
 </body>
 </html>
