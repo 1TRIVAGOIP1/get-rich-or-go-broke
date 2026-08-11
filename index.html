@@ -185,7 +185,7 @@ button{ font-family:inherit; }
 .result-delta.positive{ color:var(--green); } .result-delta.negative{ color:var(--red); }
 
 /* victory / bankruptcy */
-.big-modal-icon{ font-size:56px; text-align:center; margin-bottom:8px; }
+.big-modal-icon{ font-size:56px; text-align:center; margin-bottom:8px; animation:dropReveal .45s ease; }
 .big-modal-title{ text-align:center; font-size:22px; font-weight:800; margin-bottom:4px; }
 .big-modal-sub{ text-align:center; font-size:14px; color:var(--text-dim); margin-bottom:20px; }
 .result-stats{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
@@ -297,7 +297,7 @@ button{ font-family:inherit; }
 .mission-row .mr-desc{ font-size:12.5px; color:var(--text-dim); margin-bottom:2px; }
 .mission-row .mr-progress{ font-family:var(--mono); font-size:12px; color:var(--gold); margin-top:6px; }
 
-/* ---------- V1.7 — Desafio 1v1 ---------- */
+/* ---------- Compartilhamento de código (trocas) ---------- */
 .duel-code-box{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px 12px; word-break:break-all; margin-bottom:10px; max-height:90px; overflow-y:auto; }
 .duel-share-block{ background:rgba(232,184,75,.06); border:1px solid var(--border); border-radius:12px; padding:14px; margin:14px 0; }
 .duel-share-title{ font-weight:700; font-size:13px; margin-bottom:8px; text-align:center; }
@@ -309,6 +309,7 @@ button{ font-family:inherit; }
 .rarity-raro{ color:var(--blue); background:rgba(79,168,240,.12); }
 .rarity-epico{ color:var(--violet); background:rgba(185,139,242,.12); }
 .rarity-lendario{ color:var(--gold); background:rgba(232,184,75,.14); }
+@keyframes dropReveal{ 0%{ transform:scale(.4) rotate(-8deg); opacity:0; } 60%{ transform:scale(1.15) rotate(4deg); opacity:1; } 100%{ transform:scale(1) rotate(0); opacity:1; } }
 .coll-card{ position:relative; cursor:pointer; }
 .coll-card .ad{ font-family:var(--mono); }
 .coll-count{ position:absolute; top:8px; right:10px; font-size:10px; font-weight:800; color:var(--text-dim); }
@@ -335,7 +336,128 @@ button{ font-family:inherit; }
 .market-listing .ml-price{ font-family:var(--mono); font-weight:800; color:var(--gold); font-size:13px; margin-top:4px; }
 .market-empty{ text-align:center; color:var(--text-dim); font-size:13px; padding:30px 10px; }
 .grb-input{ width:100%; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:12px; color:var(--text); font-family:var(--mono); font-size:16px; text-align:center; }
+
+/* ===================== POLIMENTO VISUAL — V2.1 (somente apresentação, sem lógica) ===================== */
+
+/* cards de coleção/conquistas: profundidade, brilho sutil e microanimação ao tocar/passar o mouse */
+.ach-card{
+  position:relative;
+  overflow:hidden;
+  transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease, border-color .18s ease;
+}
+.ach-card::before{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(160deg, rgba(255,255,255,.05), transparent 55%);
+  opacity:0; transition:opacity .18s ease; pointer-events:none;
+}
+.ach-card:hover::before, .ach-card:active::before{ opacity:1; }
+.coll-card:hover, .coll-card:active, .trade-picker-item:hover, .trade-picker-item:active{ transform:translateY(-3px) scale(1.015); }
+.coll-card .ai, .trade-picker-item .ai{ transition:transform .2s cubic-bezier(.2,.8,.2,1); display:inline-block; }
+.coll-card:hover .ai, .coll-card:active .ai, .trade-picker-item:hover .ai, .trade-picker-item:active .ai{ transform:scale(1.14) rotate(-3deg); }
+.ach-card.locked{ transition:opacity .18s ease, transform .18s ease; }
+.ach-card.locked:hover{ opacity:.55; }
+
+/* destaque progressivo por raridade — sutil em comum/incomum, mais forte em épico/lendário */
+.ach-card.r-comum{ box-shadow:0 4px 14px -9px rgba(0,0,0,.6); }
+.ach-card.r-incomum{ border-color:rgba(61,214,140,.3); box-shadow:0 4px 16px -9px rgba(61,214,140,.22); }
+.ach-card.r-raro{ border-color:rgba(79,168,240,.38); box-shadow:0 5px 18px -9px rgba(79,168,240,.28); }
+.ach-card.r-epico{ border-color:rgba(185,139,242,.42); box-shadow:0 6px 20px -8px rgba(185,139,242,.35); }
+.ach-card.r-lendario{
+  border-color:rgba(232,184,75,.5);
+  box-shadow:0 8px 24px -8px rgba(232,184,75,.45);
+  background:linear-gradient(160deg, rgba(232,184,75,.07), var(--surface) 65%);
+}
+.ach-card.r-lendario:hover, .ach-card.r-lendario:active{ box-shadow:0 10px 28px -6px rgba(232,184,75,.6); }
+.ach-card.r-epico:hover, .ach-card.r-epico:active{ box-shadow:0 8px 22px -6px rgba(185,139,242,.5); }
+
+/* badges de raridade com leve brilho, coerente com a força de cada nível */
+.rarity-badge{ transition:filter .15s ease; }
+.rarity-lendario{ box-shadow:0 0 10px -2px rgba(232,184,75,.5); }
+.rarity-epico{ box-shadow:0 0 8px -3px rgba(185,139,242,.45); }
+
+/* botões: brilho de varredura sutil no toque/hover, sem custo de performance */
+.btn{ position:relative; overflow:hidden; }
+.btn::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(120deg, transparent, rgba(255,255,255,.10), transparent);
+  transform:translateX(-120%); transition:transform .5s ease; pointer-events:none;
+}
+.btn:hover::after{ transform:translateX(120%); }
+.btn-primary:hover{ filter:brightness(1.05); }
+
+/* cards de ação/arquétipo/modo: leve elevação no hover (desktop) */
+.action-card, .archetype-card, .mode-card, .header-icon-btn{
+  transition:transform .15s cubic-bezier(.2,.8,.2,1), border-color .15s ease, box-shadow .15s ease;
+}
+.action-card:hover{ transform:translateY(-2px); border-color:var(--gold-dim); box-shadow:0 6px 16px -9px rgba(0,0,0,.6); }
+.header-icon-btn:hover{ border-color:var(--gold-dim); }
+
+/* listas e cards gerais: transição suave e leve destaque ao passar o mouse */
+.market-listing, .trade-item-card, .mission-row, .record-row, .business-card,
+.risk-card, .event-card, .setting-row, .patr-row, .invest-cat-card{
+  transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.market-listing:hover, .trade-item-card:hover{ border-color:var(--gold-dim); box-shadow:0 6px 18px -11px rgba(0,0,0,.6); }
+
+/* números e indicadores mais legíveis (alinhamento tabular, leve espaçamento) */
+.record-row .rv, .patr-total .v, .market-listing .ml-price, .mission-row .mr-progress,
+.day-pill, .grb-balance, .wealth-value, .stat-chip, .biz-level{
+  font-variant-numeric: tabular-nums;
+}
+
+/* barra de progresso com brilho sutil, sem trocar cores/lógica */
+.progress-fill{ box-shadow:0 0 8px rgba(232,184,75,.45); position:relative; overflow:hidden; }
+.progress-fill::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  transform:translateX(-100%); animation:progressShine 2.6s ease-in-out infinite;
+}
+@keyframes progressShine{ 0%,60%{ transform:translateX(-100%); } 100%{ transform:translateX(100%); } }
+
+/* stat chips: leve profundidade e destaque no valor */
+.stat-chip{ transition:border-color .15s ease, transform .15s ease; }
+.stat-chip:hover{ border-color:var(--gold-dim); }
+.stat-chip-value{ text-shadow:0 0 12px rgba(255,255,255,.06); }
+
+/* ícone grande de itens/coleção: leve glow para reforçar sensação premium */
+.coll-card .ai, .ach-card .ai{ text-shadow:0 2px 10px rgba(0,0,0,.35); }
+.ach-card.r-epico .ai{ filter:drop-shadow(0 0 6px rgba(185,139,242,.55)); }
+.ach-card.r-lendario .ai{ filter:drop-shadow(0 0 8px rgba(232,184,75,.6)); }
+
+/* épico/lendário: brilho ambiente muito sutil e contínuo, sem exagero */
+@keyframes legendaryGlow{
+  0%,100%{ box-shadow:0 6px 20px -8px rgba(232,184,75,.4); }
+  50%{ box-shadow:0 8px 26px -6px rgba(232,184,75,.62); }
+}
+.ach-card.r-lendario:not(.locked){ animation:legendaryGlow 3.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce){
+  .ach-card.r-lendario:not(.locked){ animation:none; }
+  .progress-fill::after{ animation:none; display:none; }
+}
+
+/* big-modal-icon (revelação de drop/resultado): leve profundidade extra */
+.big-modal-icon{ filter:drop-shadow(0 6px 16px rgba(0,0,0,.4)); }
+
+/* botões de ação principais: micro-resposta mais macia ao toque */
+.action-card{ box-shadow:0 4px 12px -8px rgba(0,0,0,.5); }
+.action-card:hover{ box-shadow:0 8px 20px -8px rgba(0,0,0,.65), 0 6px 16px -9px rgba(0,0,0,.6); }
+
+/* wealth-card: leve brilho ambiente para reforçar destaque do valor principal */
+.wealth-card{ box-shadow:0 10px 30px -18px rgba(0,0,0,.6); }
+.gauge-marker{ will-change:left; }
+
+/* modais e toasts: leve profundidade extra para sensação premium */
+.modal{ backdrop-filter:blur(3px); }
+.toast{ backdrop-filter:blur(4px); }
+
+/* reduz microanimações de hover em telas touch (mantém apenas os estados :active) */
+@media (hover:none){
+  .ach-card:hover, .market-listing:hover, .trade-item-card:hover,
+  .action-card:hover, .header-icon-btn:hover{ transform:none; box-shadow:inherit; }
+}
 </style>
+
 </head>
 <body>
 <div id="app">
@@ -384,7 +506,7 @@ button{ font-family:inherit; }
     </div>
 
     <div class="splash-buttons" style="margin-top:16px;">
-      <button class="btn btn-outline i18n" onclick="goToDuelScreen()">⚔️ DESAFIO 1V1</button>
+      <button class="btn btn-outline i18n" onclick="openMultiplayerScreen()">🌐 MULTIPLAYER 1V1</button>
       <button class="btn btn-outline i18n" onclick="openCollectionScreen()">💎 COLEÇÃO</button>
       <button class="btn btn-outline i18n" onclick="openMarketScreen()">🏪 MERCADO</button>
       <button class="btn btn-outline i18n" onclick="openRecordsScreen()">🏆 RECORDES</button>
@@ -434,33 +556,98 @@ button{ font-family:inherit; }
     <button class="btn btn-primary i18n" onclick="beginGame()">🚀 COMEÇAR</button>
   </div>
 
-  <!-- ============ DESAFIO 1V1 (V1.7) ============ -->
-  <div id="screen-duel" class="screen">
+  <!-- ============ MULTIPLAYER 1V1 (MATCHMAKING - FASE 1) ============ -->
+  <div id="screen-mp" class="screen">
     <div class="game-header">
-      <div class="header-icon-btn" onclick="goToMenu()">🏠</div>
-      <div class="header-title i18n">⚔️ DESAFIO 1V1</div>
+      <div class="header-icon-btn" onclick="mpLeaveScreen()">🏠</div>
+      <div class="header-title i18n">🌐 MULTIPLAYER 1V1</div>
       <div class="header-icon-btn" style="visibility:hidden;">🔊</div>
     </div>
-    <p class="modal-sub i18n" style="text-align:center; padding:10px 10px 0;">Jogue uma partida normal e desafie alguém a superar seu resultado. Sem internet — basta compartilhar o código.</p>
-
-    <div class="progress-section">
-      <button class="btn btn-primary i18n" onclick="startDuelCreate()">🆕 CRIAR DESAFIO</button>
-    </div>
-
-    <div class="progress-section" id="duel-last-code-block" style="display:none;">
-      <div class="progress-section-title i18n">📋 Seu último desafio</div>
-      <div class="duel-code-box" id="duel-last-code"></div>
-      <button class="btn btn-outline i18n" onclick="copyDuelCode('duel-last-code')">📋 COPIAR CÓDIGO</button>
-    </div>
-
-    <div class="progress-section">
-      <div class="progress-section-title i18n">🔑 Aceitar um desafio</div>
-      <textarea id="duel-code-input" class="i18n" placeholder="Cole aqui o código do desafio" style="width:100%; min-height:64px; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:var(--mono); font-size:12px; resize:vertical;"></textarea>
-      <div id="duel-preview" style="display:none; margin:10px 0;"></div>
-      <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
-        <button class="btn btn-secondary i18n" onclick="previewDuelCode()">🔍 VER DESAFIO</button>
-        <button class="btn btn-primary i18n" id="duel-accept-btn" style="display:none;" onclick="startDuelAccept()">⚔️ ACEITAR DESAFIO</button>
+    <div class="progress-section" id="mp-ranking-block" style="padding:16px;">
+      <div class="progress-section-title i18n">🏆 RANKING</div>
+      <div class="stat-row">
+        <div class="stat-chip"><div class="stat-chip-label i18n">Rating</div><div class="stat-chip-value" id="mp-rank-rating" style="color:var(--gold);">—</div></div>
+        <div class="stat-chip"><div class="stat-chip-label i18n">Vitórias</div><div class="stat-chip-value" id="mp-rank-wins">—</div></div>
+        <div class="stat-chip"><div class="stat-chip-label i18n">Derrotas</div><div class="stat-chip-value" id="mp-rank-losses">—</div></div>
       </div>
+      <div class="modal-sub" style="text-align:center; margin-top:6px;" id="mp-rank-matches"></div>
+    </div>
+
+    <div class="progress-section" style="text-align:center; padding:26px 16px;">
+      <div id="mp-idle-block">
+        <p class="modal-sub i18n" style="text-align:center;">Encontre um adversário automaticamente para uma partida 1v1.</p>
+        <button class="btn btn-primary i18n" onclick="mpStartSearch()">🔎 BUSCAR BATALHA</button>
+      </div>
+      <div id="mp-searching-block" style="display:none;">
+        <div class="big-modal-icon" style="animation:dropReveal 1.2s ease-in-out infinite alternate;">⚔️</div>
+        <div class="big-modal-title i18n">BUSCANDO OPONENTE...</div>
+        <div class="modal-sub i18n">Procurando um adversário...</div>
+        <button class="btn btn-outline i18n" style="margin-top:10px;" onclick="mpCancelSearch()">✖️ CANCELAR</button>
+      </div>
+      <div id="mp-found-block" style="display:none;">
+        <div class="big-modal-icon">🤝</div>
+        <div class="big-modal-title i18n">OPONENTE ENCONTRADO!</div>
+        <div class="modal-sub i18n">Preparando batalha...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MULTIPLAYER 1V1 — BATALHA SINCRONIZADA (FASE 2/3) ============ -->
+  <div id="screen-mp-battle" class="screen">
+    <div class="game-header">
+      <div class="header-icon-btn" id="mp-battle-leave-btn" onclick="mpConfirmAbandon()">🚪</div>
+      <div class="header-title i18n">⚔️ BATALHA 1V1</div>
+      <div class="header-icon-btn" style="visibility:hidden;">🔊</div>
+    </div>
+    <div id="mp-conn-banner" style="display:none; text-align:center; font-size:12px; font-weight:700; padding:8px; border-radius:10px; margin:0 0 10px;"></div>
+
+    <div class="progress-section" style="padding:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="text-align:left;">
+          <div class="stat-chip-label i18n">VOCÊ</div>
+          <div class="stat-chip-value" id="mp-my-cash" style="color:var(--gold); font-size:20px;">—</div>
+        </div>
+        <div class="day-pill" id="mp-round-pill">RODADA 1</div>
+        <div style="text-align:right;">
+          <div class="stat-chip-label i18n">ADVERSÁRIO</div>
+          <div class="stat-chip-value" id="mp-opp-cash" style="color:var(--text); font-size:20px;">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-section" id="mp-battle-actions-block" style="padding:16px; text-align:center;">
+      <p class="modal-sub i18n" style="text-align:center;">Escolha sua ação para esta rodada.</p>
+      <div class="risk-list" id="mp-battle-action-list"></div>
+    </div>
+
+    <div class="progress-section" id="mp-battle-waiting-block" style="display:none; padding:26px 16px; text-align:center;">
+      <div class="big-modal-icon" id="mp-battle-waiting-icon" style="animation:dropReveal 1.2s ease-in-out infinite alternate;">⏳</div>
+      <div class="big-modal-title i18n" id="mp-battle-waiting-title">AGUARDANDO SUA AÇÃO</div>
+      <div class="modal-sub i18n" id="mp-battle-waiting-sub">Escolha uma ação para continuar.</div>
+      <div id="mp-disconnect-block" style="display:none; margin-top:14px;">
+        <p class="modal-sub i18n" style="text-align:center;">O adversário parece estar inativo.</p>
+        <button class="btn btn-danger i18n" onclick="mpClaimDisconnectWin()">🏳️ REIVINDICAR VITÓRIA</button>
+      </div>
+    </div>
+
+    <div class="progress-section" id="mp-battle-result-block" style="display:none; padding:16px;">
+      <div class="progress-section-title i18n">📋 RESULTADO DA RODADA</div>
+      <div id="mp-battle-result-text" class="modal-sub" style="text-align:center;"></div>
+    </div>
+
+    <div class="progress-section" id="mp-battle-end-block" style="display:none; padding:22px 16px; text-align:center;">
+      <div class="big-modal-icon" id="mp-battle-end-icon">🏆</div>
+      <div class="big-modal-title i18n" id="mp-battle-end-title">VOCÊ VENCEU!</div>
+      <div id="mp-battle-reward-block" style="display:none; margin-top:10px;">
+        <div style="font-family:var(--mono); font-weight:800; color:var(--gold); font-size:18px;" id="mp-battle-reward-grb">+100 GRB</div>
+        <div style="font-family:var(--mono); font-weight:800; color:var(--blue); font-size:15px; margin-top:2px;" id="mp-battle-reward-xp">+50 XP</div>
+      </div>
+      <div id="mp-battle-rank-block" style="display:none; margin-top:10px;">
+        <div class="modal-sub" id="mp-battle-rank-transition" style="font-family:var(--mono); font-weight:700;"></div>
+        <div style="font-family:var(--mono); font-weight:800; font-size:16px; margin-top:2px;" id="mp-battle-rank-delta"></div>
+      </div>
+      <div class="modal-sub i18n" id="mp-battle-end-sub" style="margin-top:8px;"></div>
+      <button class="btn btn-primary i18n" style="margin-top:14px;" onclick="mpExitBattle()">SAIR</button>
     </div>
   </div>
 
@@ -586,6 +773,14 @@ button{ font-family:inherit; }
     <div class="setting-row"><span class="setting-label i18n">🔊 Som</span><div class="switch" id="switch-sound" onclick="toggleSetting('sound')"><div class="knob"></div></div></div>
     <div class="setting-row"><span class="setting-label i18n">🎵 Música ambiente</span><div class="switch" id="switch-music" onclick="toggleSetting('music')"><div class="knob"></div></div></div>
     <div class="setting-row"><span class="setting-label i18n">📳 Vibração</span><div class="switch" id="switch-vibration" onclick="toggleSetting('vibration')"><div class="knob"></div></div></div>
+    <div class="setting-row" style="flex-direction:column; align-items:stretch; gap:6px;">
+      <span class="setting-label i18n">🎚️ Volume da música</span>
+      <input type="range" id="slider-music-volume" min="0" max="100" step="5" style="width:100%;" oninput="setVolumeSetting('musicVolume', this.value)">
+    </div>
+    <div class="setting-row" style="flex-direction:column; align-items:stretch; gap:6px;">
+      <span class="setting-label i18n">🎚️ Volume dos efeitos</span>
+      <input type="range" id="slider-sfx-volume" min="0" max="100" step="5" style="width:100%;" oninput="setVolumeSetting('sfxVolume', this.value)">
+    </div>
     <div class="setting-row" style="cursor:pointer;" onclick="purchaseRemoveAds()"><span class="setting-label i18n">⭐ Remover anúncios</span><span class="i18n" style="color:var(--gold); font-weight:700; font-size:13px;">EM BREVE</span></div>
     <button class="btn btn-danger i18n" style="margin-top:10px;" onclick="confirmResetProgress()">🗑️ Resetar progresso</button>
     <p class="small-note i18n">Get Rich or Go Broke v1.4 — 100% offline. Seus dados ficam salvos apenas neste dispositivo.</p>
@@ -664,11 +859,6 @@ button{ font-family:inherit; }
         <div class="result-stat"><div class="v" id="vic-bets">0</div><div class="l i18n">Apostas</div></div>
         <div class="result-stat"><div class="v" id="vic-events">0</div><div class="l i18n">Eventos</div></div>
       </div>
-      <div class="duel-share-block" id="duel-share-victory" style="display:none;">
-        <div class="duel-share-title i18n">⚔️ Desafio criado! Envie o código para alguém superar:</div>
-        <div class="duel-code-box" id="duel-code-victory"></div>
-        <button class="btn btn-outline i18n" onclick="copyDuelCode('duel-code-victory')">📋 COPIAR CÓDIGO DO DESAFIO</button>
-      </div>
       <div style="display:flex; flex-direction:column; gap:10px;">
         <button class="btn btn-primary i18n" onclick="playAgain()">🔁 JOGAR NOVAMENTE</button>
         <button class="btn btn-outline i18n" onclick="shareResult()">📤 COMPARTILHAR RESULTADO</button>
@@ -688,23 +878,9 @@ button{ font-family:inherit; }
         <div class="result-stat"><div class="v" id="bank-events">0</div><div class="l i18n">Eventos</div></div>
       </div>
       <p class="modal-sub" id="bank-cause-text" style="text-align:center;"></p>
-      <div class="duel-share-block" id="duel-share-bankruptcy" style="display:none;">
-        <div class="duel-share-title i18n">⚔️ Desafio criado! Envie o código para alguém superar:</div>
-        <div class="duel-code-box" id="duel-code-bankruptcy"></div>
-        <button class="btn btn-outline i18n" onclick="copyDuelCode('duel-code-bankruptcy')">📋 COPIAR CÓDIGO DO DESAFIO</button>
-      </div>
       <div style="display:flex; flex-direction:column; gap:10px;">
         <button class="btn btn-outline i18n" id="bank-ad-btn" onclick="watchAdForSecondChance()">📺 ASSISTIR ANÚNCIO (+$150)</button>
         <button class="btn btn-primary i18n" onclick="playAgain()">🔁 TENTAR NOVAMENTE</button>
-      </div>
-    </div>
-
-    <div class="modal" id="modal-duel-result">
-      <div class="big-modal-icon" id="duel-result-icon">🏆</div>
-      <div class="big-modal-title i18n" id="duel-result-title">VOCÊ VENCEU!</div>
-      <div class="modal-sub" id="duel-result-lines" style="text-align:center; font-family:var(--mono); font-size:15px; line-height:2; margin:16px 0;"></div>
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <button class="btn btn-primary i18n" onclick="closeModal(); goToMenu();">🏠 VOLTAR AO MENU</button>
       </div>
     </div>
 
@@ -743,6 +919,7 @@ var supabaseClient = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 var authUser = null;       // usuário autenticado (auth.users), null se deslogado
+var mpAuthToken = null;    // access_token atual (usado apenas no beforeunload/abandono best-effort)
 var authPlayerRow = null;  // linha correspondente em "players" (contém o nickname)
 
 var LEVELS = [
@@ -812,18 +989,209 @@ var RARITY_INFO = {
   epico:    { label:'Épico',    icon:'🟣', cls:'rarity-epico',    weight:6  },
   lendario: { label:'Lendário', icon:'🟡', cls:'rarity-lendario', weight:2  }
 };
+/* basePrice = VALOR DE REFERÊNCIA em GRB (definido item a item posteriormente).
+   Faixas oficiais por raridade (apenas para referência/validação futura, NUNCA usadas
+   para gerar preço automático): comum 50–150, incomum 150–400, raro 400–900,
+   épico 900–1.500, lendário 1.500–2.000. */
 var COLLECTIBLES_CATALOG = [
-  { id:'moeda_buzios',   icon:'🪙', name:'Moeda Búzios',        rarity:'comum',    supply:500 },
-  { id:'cedula_sortuda', icon:'💵', name:'Cédula Sortuda',      rarity:'comum',    supply:500 },
-  { id:'grafico_dourado',icon:'📈', name:'Gráfico Dourado',     rarity:'incomum',  supply:300 },
-  { id:'cofre_antigo',   icon:'🏦', name:'Cofre Antigo',        rarity:'incomum',  supply:300 },
-  { id:'maleta_exec',    icon:'💼', name:'Maleta Executiva',    rarity:'raro',     supply:150 },
-  { id:'cartola',        icon:'🎩', name:'Cartola do Magnata',  rarity:'raro',     supply:150 },
-  { id:'diamante_bruto', icon:'💎', name:'Diamante Bruto',      rarity:'epico',    supply:50  },
-  { id:'trofeu_ouro',    icon:'🏆', name:'Troféu de Ouro',      rarity:'epico',    supply:50  },
-  { id:'coroa_real',     icon:'👑', name:'Coroa Real',          rarity:'lendario', supply:10  },
-  { id:'foguete_sucesso',icon:'🚀', name:'Foguete do Sucesso',  rarity:'lendario', supply:10  }
+  { id:'moeda_buzios',   icon:'🪙', name:'Moeda Búzios',        rarity:'comum',    supply:500, basePrice:60 },
+  { id:'cedula_sortuda', icon:'💵', name:'Cédula Sortuda',      rarity:'comum',    supply:500, basePrice:90 },
+  { id:'grafico_dourado',icon:'📈', name:'Gráfico Dourado',     rarity:'incomum',  supply:300, basePrice:180 },
+  { id:'cofre_antigo',   icon:'🏦', name:'Cofre Antigo',        rarity:'incomum',  supply:300, basePrice:280 },
+  { id:'maleta_exec',    icon:'💼', name:'Maleta Executiva',    rarity:'raro',     supply:150, basePrice:450 },
+  { id:'cartola',        icon:'🎩', name:'Cartola do Magnata',  rarity:'raro',     supply:150, basePrice:600 },
+  { id:'diamante_bruto', icon:'💎', name:'Diamante Bruto',      rarity:'epico',    supply:50,  basePrice:750 },
+  { id:'trofeu_ouro',    icon:'🏆', name:'Troféu de Ouro',      rarity:'epico',    supply:50,  basePrice:950 },
+  { id:'coroa_real',     icon:'👑', name:'Coroa Real',          rarity:'lendario', supply:10,  basePrice:1200 },
+  { id:'foguete_sucesso',icon:'🚀', name:'Foguete do Sucesso',  rarity:'lendario', supply:10,  basePrice:1450 }
 ];
+
+/* Faixas oficiais de referência por raridade (GRB). Usadas apenas para exibição/validação
+   futura — NUNCA para calcular ou atribuir automaticamente o basePrice de um item. */
+var BASE_PRICE_RANGES = {
+  comum:    { min:50,   max:150  },
+  incomum:  { min:150,  max:400  },
+  raro:     { min:400,  max:900  },
+  epico:    { min:900,  max:1500 },
+  lendario: { min:1500, max:2000 }
+};
+
+
+/* ===================== DROP MENSAL — AGOSTO 2026 (V1.9) =====================
+   Coleção exclusiva e independente do COLLECTIBLES_CATALOG principal.
+   Estrutura preparada para, no futuro, trocar a coleção ativa do mês
+   apenas adicionando um novo bloco em MONTHLY_DROPS (o encerramento/ativação
+   é automático por data, nunca manual). */
+var AUGUST_2026_CATALOG = [
+  { id:'ago26_ficha_cassino',    icon:'🎰', name:'Ficha de Cassino',      rarity:'comum',    dropChance:30, supply:2000, collection:'Drop Agosto 2026', basePrice:150 },
+  { id:'ago26_nota_rasgada',     icon:'💵', name:'Nota Rasgada',          rarity:'comum',    dropChance:22, supply:2000, collection:'Drop Agosto 2026', basePrice:180 },
+  { id:'ago26_cartao_black',     icon:'💳', name:'Cartão Black',          rarity:'incomum',  dropChance:15, supply:1000, collection:'Drop Agosto 2026', basePrice:350 },
+  { id:'ago26_acao_alta',        icon:'📈', name:'Ação em Alta',          rarity:'incomum',  dropChance:10, supply:1000, collection:'Drop Agosto 2026', basePrice:400 },
+  { id:'ago26_diamante_azul',    icon:'💎', name:'Diamante Azul',         rarity:'raro',     dropChance:7,  supply:400,  collection:'Drop Agosto 2026', basePrice:700 },
+  { id:'ago26_oculos_milionario',icon:'🕶️', name:'Óculos de Milionário',  rarity:'raro',     dropChance:5,  supply:400,  collection:'Drop Agosto 2026', basePrice:800 },
+  { id:'ago26_taca_ouro',        icon:'🏆', name:'Taça de Ouro',          rarity:'epico',    dropChance:4,  supply:150,  collection:'Drop Agosto 2026', basePrice:1200 },
+  { id:'ago26_maleta_milhoes',   icon:'💼', name:'Maleta de Milhões',     rarity:'epico',    dropChance:3,  supply:150,  collection:'Drop Agosto 2026', basePrice:1400 },
+  { id:'ago26_coroa_bilionario', icon:'👑', name:'Coroa do Bilionário',   rarity:'lendario', dropChance:2,  supply:30,   collection:'Drop Agosto 2026', basePrice:1850 },
+  { id:'ago26_relogio_platina',  icon:'⌚', name:'Relógio de Platina',    rarity:'lendario', dropChance:2,  supply:30,   collection:'Drop Agosto 2026', basePrice:2000 }
+];
+
+/* ===================== DROP MENSAL — SETEMBRO 2026 (V2.0) =====================
+   Coleção exclusiva, independente de COLLECTIBLES_CATALOG e de AUGUST_2026_CATALOG.
+   Pesos de sorteio (dropChance) seguem a disponibilidade indicada:
+   Alta > Média > Média-baixa > Baixa > Muito baixa > Extremamente baixa. */
+var SEPTEMBER_2026_CATALOG = [
+  { id:'set26_moeda_sorte',        icon:'🍀', name:'Moeda da Sorte',          rarity:'comum',    dropChance:30, supply:2000, collection:'Drop Setembro 2026', basePrice:120 },
+  { id:'set26_contrato_milionario',icon:'📜', name:'Contrato Milionário',     rarity:'comum',    dropChance:22, supply:2000, collection:'Drop Setembro 2026', basePrice:150 },
+  { id:'set26_cartao_vip',         icon:'🎫', name:'Cartão VIP',              rarity:'incomum',  dropChance:15, supply:1000, collection:'Drop Setembro 2026', basePrice:280 },
+  { id:'set26_taca_champagne',     icon:'🥂', name:'Taça de Champagne',       rarity:'incomum',  dropChance:10, supply:1000, collection:'Drop Setembro 2026', basePrice:350 },
+  { id:'set26_chave_cofre',        icon:'🗝️', name:'Chave do Cofre',          rarity:'raro',     dropChance:7,  supply:400,  collection:'Drop Setembro 2026', basePrice:550 },
+  { id:'set26_diamante_negro',     icon:'🖤', name:'Diamante Negro',          rarity:'raro',     dropChance:5,  supply:400,  collection:'Drop Setembro 2026', basePrice:750 },
+  { id:'set26_smartphone_ouro',    icon:'📱', name:'Smartphone de Ouro',      rarity:'epico',    dropChance:4,  supply:150,  collection:'Drop Setembro 2026', basePrice:1050 },
+  { id:'set26_chave_supercarro',   icon:'🔑', name:'Chave do Supercarro',     rarity:'epico',    dropChance:3,  supply:150,  collection:'Drop Setembro 2026', basePrice:1350 },
+  { id:'set26_touro_wallstreet',   icon:'🐂', name:'Touro de Wall Street',    rarity:'lendario', dropChance:2,  supply:30,   collection:'Drop Setembro 2026', basePrice:1750 },
+  { id:'set26_imperio_dourado',    icon:'🏰', name:'Império Dourado',         rarity:'lendario', dropChance:2,  supply:30,   collection:'Drop Setembro 2026', basePrice:2000 }
+];
+
+/* Cada drop sazonal tem período próprio (data/hora real do dispositivo).
+   Ativação e encerramento são 100% automáticos — nunca exigem ação manual,
+   e nunca há dois drops sazonais ativos ao mesmo tempo (períodos não se sobrepõem). */
+var MONTHLY_DROPS = {
+  '2026-08': {
+    name:'Drop Agosto 2026',
+    catalog: AUGUST_2026_CATALOG,
+    startAt:'2026-08-01T00:00:00',
+    endAt:  '2026-08-31T23:59:59'
+  },
+  '2026-09': {
+    name:'Drop Setembro 2026',
+    catalog: SEPTEMBER_2026_CATALOG,
+    startAt:'2026-09-01T00:00:00',
+    endAt:  '2026-09-30T23:59:59'
+  }
+};
+
+function isMonthlyDropActive(key){
+  var cfg = MONTHLY_DROPS[key];
+  if(!cfg) return false;
+  var now = new Date();
+  return now >= new Date(cfg.startAt) && now <= new Date(cfg.endAt);
+}
+
+/* Retorna a chave do drop sazonal ativo AGORA (data real do sistema), ou null
+   se nenhum estiver no período. Isso garante que, ao virar o mês, o drop
+   anterior encerra e o novo ativa automaticamente, sem qualquer ação manual. */
+function getActiveMonthlyDropKey(){
+  var keys = Object.keys(MONTHLY_DROPS);
+  for(var i=0;i<keys.length;i++){ if(isMonthlyDropActive(keys[i])) return keys[i]; }
+  return null;
+}
+
+function getActiveMonthlyDropCatalog(){
+  var key = getActiveMonthlyDropKey();
+  return key ? MONTHLY_DROPS[key].catalog : [];
+}
+
+/* Localiza a qual drop mensal um item pertence (para exibir status/origem),
+   percorrendo os catálogos sem misturá-los. */
+function findMonthlyDropKeyForItem(itemId){
+  var keys = Object.keys(MONTHLY_DROPS);
+  for(var i=0;i<keys.length;i++){
+    if(MONTHLY_DROPS[keys[i]].catalog.some(function(it){ return it.id===itemId; })) return keys[i];
+  }
+  return null;
+}
+
+function formatDateBR(isoLike){
+  var d = new Date(isoLike);
+  var dd = String(d.getDate()).padStart(2,'0');
+  var mm = String(d.getMonth()+1).padStart(2,'0');
+  return dd+'/'+mm+'/'+d.getFullYear();
+}
+
+/* HTML do indicador de status de um drop sazonal (ativo/encerrado) — usado
+   nos cabeçalhos de coleção e em qualquer outro ponto que precise exibi-lo. */
+function monthlyDropStatusHtml(key){
+  var cfg = MONTHLY_DROPS[key];
+  if(!cfg) return '';
+  var active = isMonthlyDropActive(key);
+  if(active){
+    return '<div class="monthly-drop-status" style="text-align:center;">'
+         +   '<div style="font-weight:800;">🎁 '+t(cfg.name.toUpperCase())+'</div>'
+         +   '<div style="color:var(--green); font-weight:700; margin-top:2px;">🟢 '+t('DROP ATIVO')+'</div>'
+         +   '<div style="font-size:11px; color:var(--text-dim); margin-top:2px;">'+t('Disponível de ')+formatDateBR(cfg.startAt)+' '+t('até')+' '+formatDateBR(cfg.endAt)+'</div>'
+         + '</div>';
+  }
+  return '<div class="monthly-drop-status" style="text-align:center;">'
+       +   '<div style="font-weight:800;">🎁 '+t(cfg.name.toUpperCase())+'</div>'
+       +   '<div style="color:var(--red); font-weight:700; margin-top:2px;">🔴 '+t('DROP ENCERRADO')+'</div>'
+       +   '<div style="font-size:11px; color:var(--text-dim); margin-top:2px;">'+t('Este Drop não está mais disponível.')+'</div>'
+       + '</div>';
+}
+
+/* Busca um collectible pelo ID em QUALQUER coleção (principal + drops mensais),
+   sem nunca misturar os arrays entre si — usado só para leitura/exibição. */
+function findCollectibleById(id){
+  var found = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===id; })[0];
+  if(found) return found;
+  var keys = Object.keys(MONTHLY_DROPS);
+  for(var i=0;i<keys.length;i++){
+    found = MONTHLY_DROPS[keys[i]].catalog.filter(function(it){ return it.id===id; })[0];
+    if(found) return found;
+  }
+  return null;
+}
+
+/* ===================== VALOR DE REFERÊNCIA (GRB) — RUNTIME =====================
+   basePrice é 100% cadastrado manualmente por item (ver catálogos acima).
+   Estas funções apenas EXIBEM/COMPARAM — nunca geram ou alteram preço algum. */
+function hasReferencePrice(item){ return !!item && typeof item.basePrice==='number' && isFinite(item.basePrice) && item.basePrice>0; }
+
+function referencePriceHtml(item){
+  if(!hasReferencePrice(item)) return '';
+  return '<div class="ref-price-box" style="margin-top:10px; text-align:center;">'
+       +   '<div style="font-size:10.5px; font-weight:800; letter-spacing:.04em; color:var(--text-dim);">'+t('VALOR DE REFERÊNCIA')+'</div>'
+       +   '<div style="font-family:var(--mono); font-weight:800; color:var(--gold); font-size:15px; margin-top:2px;">≈ '+formatGRB(item.basePrice)+' GRB</div>'
+       +   '<div style="font-size:10.5px; color:var(--text-dim); margin-top:3px;">'+t('Valor estimado pelo sistema. O preço de mercado pode variar.')+'</div>'
+       +  '</div>';
+}
+
+/* Compara um preço anunciado com o valor de referência do item.
+   Faixas: até 20% acima = próximo · até 60% acima = acima · mais que isso = muito acima.
+   Preços iguais ou abaixo da referência também contam como "próximo". Não bloqueia nada. */
+function priceVsReferenceIndicator(price, item){
+  if(!hasReferencePrice(item) || !price || !isFinite(price) || price<=0) return null;
+  var ratio = price / item.basePrice;
+  if(ratio <= 1.2) return { emoji:'🟢', label:t('Próximo da referência') };
+  if(ratio <= 1.6) return { emoji:'🟡', label:t('Acima da referência') };
+  return { emoji:'🔴', label:t('Muito acima da referência') };
+}
+
+function priceVsReferenceHtml(price, item){
+  if(!hasReferencePrice(item)) return '';
+  var ind = priceVsReferenceIndicator(price, item);
+  var html = '<div class="ref-price-compare" style="margin-top:8px; font-size:12px; color:var(--text-dim);">'
+       +   '<div>'+t('Preço do anúncio: ')+'<b style="color:var(--text);">'+formatGRB(price)+' GRB</b></div>'
+       +   '<div>'+t('Valor de referência: ')+'<b style="color:var(--text);">'+formatGRB(item.basePrice)+' GRB</b></div>';
+  if(ind) html += '<div style="margin-top:4px;">'+ind.emoji+' '+ind.label+'</div>';
+  html += '</div>';
+  return html;
+}
+
+/* Mostra a coleção/drop de origem de um item e, se for de um drop sazonal já
+   encerrado, o selo 🔴 DROP ENCERRADO — os itens permanecem no inventário
+   normalmente, só a exibição muda. */
+function dropOriginHtml(item){
+  if(!item || !item.collection) return '';
+  var key = findMonthlyDropKeyForItem(item.id);
+  var active = key ? isMonthlyDropActive(key) : true;
+  var html = '<div style="text-align:center; margin-bottom:10px;">'
+       +   '<div style="font-size:11.5px; color:var(--text-dim);">🎁 '+t(item.collection)+'</div>';
+  if(!active){
+    html += '<div style="font-size:11.5px; font-weight:800; color:var(--red); margin-top:2px;">🔴 '+t('DROP ENCERRADO')+'</div>';
+  }
+  html += '</div>';
+  return html;
+}
 
 var NO_EVENT_FLAVORS = [
   'Nenhuma novidade hoje. Continue tomando decisões.',
@@ -926,6 +1294,7 @@ var TRANSLATIONS = {
     '🏆 Conquista desbloqueada: ':'🏆 Achievement unlocked: ', 'Conquista desbloqueada: ':'Achievement unlocked: ',
     // settings
     '⚙️ Configurações':'⚙️ Settings', '🔊 Som':'🔊 Sound', '🎵 Música ambiente':'🎵 Ambient music', '📳 Vibração':'📳 Vibration',
+    '🎚️ Volume da música':'🎚️ Music volume', '🎚️ Volume dos efeitos':'🎚️ Sound effects volume',
     '⭐ Remover anúncios':'⭐ Remove ads', 'EM BREVE':'COMING SOON', '🗑️ Resetar progresso':'🗑️ Reset progress',
     'Get Rich or Go Broke v1.4 — 100% offline. Seus dados ficam salvos apenas neste dispositivo.':'Get Rich or Go Broke v1.4 — 100% offline. Your data is saved only on this device.',
     '👤 Nome':'👤 Name', 'EDITAR':'EDIT', '🌎 Idioma':'🌎 Language',
@@ -1069,16 +1438,8 @@ var TRANSLATIONS = {
     'Maior sequência de login':'Longest login streak', 'Maior aposta':'Biggest bet',
     'Maior investimento único':'Biggest single investment', 'Mais negócios simultâneos':'Most simultaneous businesses',
     'SEQ.':'STR.',
-    // V1.7 — Desafio 1v1
-    '⚔️ DESAFIO 1V1':'⚔️ 1V1 CHALLENGE',
-    'Jogue uma partida normal e desafie alguém a superar seu resultado. Sem internet — basta compartilhar o código.':'Play a normal match and challenge someone to beat your result. No internet needed — just share the code.',
-    '🆕 CRIAR DESAFIO':'🆕 CREATE CHALLENGE', '📋 Seu último desafio':'📋 Your last challenge',
-    '📋 COPIAR CÓDIGO':'📋 COPY CODE', '🔑 Aceitar um desafio':'🔑 Accept a challenge',
-    'Cole aqui o código do desafio':'Paste the challenge code here', '🔍 VER DESAFIO':'🔍 VIEW CHALLENGE',
-    '⚔️ ACEITAR DESAFIO':'⚔️ ACCEPT CHALLENGE', 'Código inválido. Verifique e tente novamente.':'Invalid code. Please check and try again.',
-    'DESAFIO DE ':'CHALLENGE FROM ', 'Patrimônio: ':'Net worth: ', 'Dias: ':'Days: ',
-    '⚔️ Desafio criado! Envie o código para alguém superar:':'⚔️ Challenge created! Send the code for someone to beat it:',
-    '📋 COPIAR CÓDIGO DO DESAFIO':'📋 COPY CHALLENGE CODE', '📋 Código copiado!':'📋 Code copied!',
+    '📋 COPIAR CÓDIGO':'📋 COPY CODE',
+    '📋 Código copiado!':'📋 Code copied!',
     'Não foi possível copiar. Copie manualmente.':'Could not copy. Please copy it manually.',
     'Copie o código manualmente.':'Copy the code manually.',
     'VOCÊ VENCEU!':'YOU WON!', 'VOCÊ PERDEU':'YOU LOST', 'EMPATE':'TIE',
@@ -1538,7 +1899,7 @@ function defaultPersistent(){
   return {
     records:{ bestNetWorth:100, mostDays:1, bestStreak:0, wins:0, bankruptcies:0, bestDailyIncome:0, bestBusinessIncome:0, bestBusinessName:'—', bestBusinessId:'',
               bestLoginStreak:0, biggestBet:0, biggestInvestment:0, mostBusinesses:0, duelWins:0, duelLosses:0 },
-    settings:{ sound:true, vibration:true, music:true, removeAds:false, lang:'pt' },
+    settings:{ sound:true, vibration:true, music:true, removeAds:false, lang:'pt', musicVolume:0.8, sfxVolume:0.8 },
     achievements:[],
     profile:{ name:'' },
     daily:{ streak:0, cycleDay:0, lastClaimDate:null, missions:[], missionsDate:null },
@@ -1550,7 +1911,8 @@ function defaultPersistent(){
     lastTradeCode:null,
     grb:500,
     marketListings:[],
-    syncedAccountId:null
+    syncedAccountId:null,
+    monthlyDrop:{ lastRollAt:0 }
   };
 }
 
@@ -1574,8 +1936,7 @@ function newGameState(){
     investCount:0, betsCount:0, eventsFaced:0,
     runBestNetWorth:100, runBestStreak:0,
     bankruptcyCause:null,
-    worldEconomy:{ mode:'normal', daysLeft:0 },
-    duel:null
+    worldEconomy:{ mode:'normal', daysLeft:0 }
   };
 }
 
@@ -1689,7 +2050,7 @@ function investIn(catId, amount){
   trackMission('invest', amount);
   trackMission('actions', 1);
   trackWeekly('invest', amount);
-  if(amount>(persistent.records.biggestInvestment||0)){ persistent.records.biggestInvestment=amount; savePersistent(); toast('🏆 '+t('NOVO RECORDE!')); }
+  if(amount>(persistent.records.biggestInvestment||0)){ persistent.records.biggestInvestment=amount; savePersistent(); toast('🏆 '+t('NOVO RECORDE!')); if(authUser) recordsSyncFromCloud(); }
   checkAchievements(); updateRecords();
   advanceDay();
 }
@@ -1823,7 +2184,7 @@ function placeBet(tierId){
   trackMission('actions', 1);
   trackMission('bet', 1);
   if(win && delta>0) trackMission('earn', delta);
-  if(bet>(persistent.records.biggestBet||0)){ persistent.records.biggestBet=bet; savePersistent(); toast('🏆 '+t('NOVO RECORDE!')); }
+  if(bet>(persistent.records.biggestBet||0)){ persistent.records.biggestBet=bet; savePersistent(); toast('🏆 '+t('NOVO RECORDE!')); if(authUser) recordsSyncFromCloud(); }
   checkAchievements(); updateRecords();
   showResultModal(tier.icon+' '+t(tier.label), resultText, delta);
   advanceDay();
@@ -1936,6 +2297,7 @@ function resolveEvent(optionIndex){
   closeModal();
   showResultModal(ev.icon+' '+t(ev.title), displayText, outcome.cashDelta||0);
   updateUI(); saveGame();
+  maybeTriggerMonthlyDrop(1); // ~1% de chance ao resolver um evento — drop natural e silencioso
   checkGameEndConditions();
 }
 
@@ -2019,6 +2381,8 @@ function advanceDay(){
     toast((m.type==='boom' ? '🚀 ' : '💥 ')+t(cfg.label)+' '+t(pct>=0?'subiu':'caiu')+' '+Math.abs(pct)+'%!');
   });
 
+  maybeTriggerMonthlyDrop(2); // ~2% de chance por dia avançado — drop natural e silencioso
+
   checkGameEndConditions();
 }
 
@@ -2100,6 +2464,7 @@ function checkAchievements(){
       if(state){ logHistory('Conquista desbloqueada: '+a.name+'.'); }
       playSound('achievement');
       savePersistent();
+      achievementPushToCloud(a.id);
     }
   });
 }
@@ -2109,6 +2474,7 @@ function onVictory(){
   persistent.records.wins++;
   savePersistent();
   checkAchievements();
+  if(authUser) recordsSyncFromCloud();
   playSound('win'); vibrate('win');
   var titleEl = document.querySelector('#modal-victory .big-modal-title');
   titleEl.setAttribute('data-pt','VOCÊ CONSEGUIU!'); titleEl.textContent = t('VOCÊ CONSEGUIU!');
@@ -2127,7 +2493,6 @@ function onVictory(){
   openModal('modal-victory');
   spawnConfetti();
   saveGame();
-  handleDuelGameEnd();
 }
 
 function onSurvivalComplete(){
@@ -2151,13 +2516,13 @@ function onSurvivalComplete(){
   openModal('modal-victory');
   spawnConfetti();
   saveGame();
-  handleDuelGameEnd();
 }
 
 function onBankruptcy(){
   persistent.records.bankruptcies++;
   savePersistent();
   checkAchievements();
+  if(authUser) recordsSyncFromCloud();
   playSound('lose'); vibrate('lose');
   var titleEl = document.querySelector('#modal-bankruptcy .big-modal-title');
   titleEl.setAttribute('data-pt','VOCÊ FALIU'); titleEl.textContent = t('VOCÊ FALIU');
@@ -2174,7 +2539,6 @@ function onBankruptcy(){
   logHistory('Faliu no dia '+state.day+'.');
   openModal('modal-bankruptcy');
   saveGame();
-  handleDuelGameEnd();
 }
 
 function onTimeout(){
@@ -2196,7 +2560,6 @@ function onTimeout(){
   logHistory('Não alcançou a meta do modo Rush em 20 dias. Patrimônio final: '+formatMoney(netWorth())+'.');
   openModal('modal-bankruptcy');
   saveGame();
-  handleDuelGameEnd();
 }
 
 function watchAdForSecondChance(){
@@ -2415,10 +2778,20 @@ function openSettingsScreen(){
   document.getElementById('switch-sound').classList.toggle('on', persistent.settings.sound);
   document.getElementById('switch-music').classList.toggle('on', persistent.settings.music);
   document.getElementById('switch-vibration').classList.toggle('on', persistent.settings.vibration);
+  document.getElementById('slider-music-volume').value = Math.round(((persistent.settings.musicVolume!=null)?persistent.settings.musicVolume:0.8)*100);
+  document.getElementById('slider-sfx-volume').value = Math.round(((persistent.settings.sfxVolume!=null)?persistent.settings.sfxVolume:0.8)*100);
   document.getElementById('lang-pt-btn').classList.toggle('on', LANG==='pt');
   document.getElementById('lang-en-btn').classList.toggle('on', LANG==='en');
   document.getElementById('settings-name-value').textContent = persistent.profile.name || t('Não definido');
   showScreen('screen-settings');
+}
+
+// Controles separados de volume — música (ambiente + batalha) e efeitos sonoros.
+function setVolumeSetting(key, value){
+  var v = Math.max(0, Math.min(100, Number(value)||0)) / 100;
+  persistent.settings[key] = v;
+  savePersistent();
+  if(key==='musicVolume'){ MusicSys.refreshVolume(); BattleMusicSys.refreshVolume(); }
 }
 
 function toggleSetting(key){
@@ -2426,7 +2799,10 @@ function toggleSetting(key){
   savePersistent();
   document.getElementById('switch-'+key).classList.toggle('on', persistent.settings[key]);
   if(key==='sound' && persistent.settings.sound){ ensureAudio(); playSound('click'); }
-  if(key==='music'){ MusicSys.setEnabled(persistent.settings.music); }
+  if(key==='music'){
+    MusicSys.setEnabled(persistent.settings.music);
+    if(persistent.settings.music){ if(mpBattleMatchId) BattleMusicSys.start(); } else { BattleMusicSys.stop(); }
+  }
   if(state) updateUI();
 }
 
@@ -2595,14 +2971,17 @@ async function initAuth(){
     var session = res && res.data && res.data.session;
     if(session){
       authUser = session.user;
+      mpAuthToken = session.access_token;
       await loadPlayerRow();
       renderAccountArea();
       await syncCloudOnLogin(); // reabrir o jogo/recarregar a página também sincroniza
+      mpTryReconnect();
     }
   }catch(e){ console.warn('Supabase getSession falhou', e); }
   supabaseClient.auth.onAuthStateChange(function(event, session){
     authUser = session ? session.user : null;
-    if(authUser){ loadPlayerRow().then(function(){ renderAccountArea(); syncCloudOnLogin(); }); }
+    mpAuthToken = session ? session.access_token : null;
+    if(authUser){ loadPlayerRow().then(function(){ renderAccountArea(); syncCloudOnLogin(); mpTryReconnect(); }); }
     else { authPlayerRow = null; renderAccountArea(); }
   });
 }
@@ -2765,6 +3144,9 @@ async function syncCloudOnLogin(){
     if(balEl) balEl.textContent = formatGRB(persistent.grb);
     if(document.getElementById('collection-grid') && document.getElementById('screen-collection').classList.contains('active')) renderCollectionGrid();
     if(document.getElementById('screen-market') && document.getElementById('screen-market').classList.contains('active')) renderMarketScreen();
+    await dailySyncFromCloud();
+    await recordsSyncFromCloud();
+    await achievementsSyncFromCloud();
   }catch(e){
     console.warn('Falha na sincronização com a nuvem', e);
     toast('⚠️ '+t('Não foi possível sincronizar com a nuvem agora. Usando dados locais.'));
@@ -2809,6 +3191,79 @@ async function syncCollectibleGrantToCloud(unit) {
   } catch (e) {
     console.warn('Falha ao sincronizar novo item:', e);
   }
+}
+
+/* ===================== DROP NATURAL — AGOSTO 2026 (RUNTIME) =====================
+   Sorteio silencioso e ponderado entre os 10 itens exclusivos do mês,
+   disparado durante ações normais do jogo (nunca por botão manual).
+   Reaproveita 100% o sistema de inventário/sincronização já existente
+   (addOwnedUnit + syncCollectibleGrantToCloud). */
+
+var MONTHLY_DROP_MIN_COOLDOWN_MS = 20000; // trava anti-spam entre sorteios
+var monthlyDropRollLock = false;          // trava em memória contra chamadas concorrentes/duplo clique
+
+function rollMonthlyDropItem(){
+  var pool = getActiveMonthlyDropCatalog();
+  if(!pool.length) return null;
+  var total = 0;
+  pool.forEach(function(it){ total += (it.dropChance||0); });
+  if(total<=0) return null;
+  var roll = Math.random()*total;
+  var acc = 0;
+  for(var i=0;i<pool.length;i++){
+    acc += pool[i].dropChance;
+    if(roll<acc) return pool[i];
+  }
+  return pool[pool.length-1];
+}
+
+/* Ponto único de entrada chamado a partir de ações reais do jogo.
+   'chancePercent' é a probabilidade (0-100) de o drop ser considerado NESSA chamada. */
+function maybeTriggerMonthlyDrop(chancePercent){
+  if(!state) return;                       // só dispara com uma partida ativa
+  if(monthlyDropRollLock) return;          // impede reentrância/duplo clique
+  var md = persistent.monthlyDrop || (persistent.monthlyDrop = { lastRollAt:0 });
+  var now = Date.now();
+  if(now - (md.lastRollAt||0) < MONTHLY_DROP_MIN_COOLDOWN_MS) return; // cooldown real, não burlável por múltiplas chamadas
+
+  if(Math.random()*100 >= chancePercent) return; // não sorteou desta vez
+
+  monthlyDropRollLock = true;
+  try{
+    var item = rollMonthlyDropItem();
+    if(!item) return;
+
+    md.lastRollAt = now;
+    savePersistent();
+
+    var edition = currentEditionYear();
+    var serial = item.supply ? rndInt(1, item.supply) : 1;
+    var unit = { itemId:item.id, edition:edition, serial:serial };
+
+    addOwnedUnit(unit);   // mesma função/infra de inventário e sync já existentes
+    savePersistent();
+
+    // pequeno atraso para não sobrepor o modal de resultado da ação que acabou de rodar
+    setTimeout(function(){ showMonthlyDropReveal(item, unit); }, 900);
+  } finally {
+    monthlyDropRollLock = false;
+  }
+}
+
+function showMonthlyDropReveal(item, unit){
+  var rarity = RARITY_INFO[item.rarity];
+  var html = '<div style="text-align:center;">'
+       +  '<div style="font-size:14px; font-weight:800; letter-spacing:.04em; color:var(--gold); margin-bottom:6px;">🎁 '+t('DROP ENCONTRADO!')+'</div>'
+       +  '<div class="big-modal-icon" style="animation:dropReveal .5s ease;">'+item.icon+'</div>'
+       +  '<div class="big-modal-title">'+t(item.name)+'</div>'
+       +  '<div style="margin:8px 0 14px;"><span class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</span></div>'
+       +  '<div class="modal-sub">'+t('Edição')+' '+unit.edition+' · #'+padSerial(unit.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div>'
+       +  '<div class="modal-sub" style="margin-top:4px; opacity:.8;">🎁 '+t('Drop Agosto 2026')+'</div>'
+       +  '</div>'
+       +  '<button class="btn btn-primary i18n" style="margin-top:16px; width:100%;" onclick="closeModal()">'+t('CONTINUAR')+'</button>';
+  document.getElementById('modal-collection-item').innerHTML = html;
+  openModal('modal-collection-item');
+  playSound('achievement'); vibrate('win');
 }
 
 async function syncCollectibleRemovalToCloud(unit) {
@@ -2876,7 +3331,13 @@ function applyPendingBonusIfAny(){
   }
 }
 
-/* ---- recompensa diária + streak de login ---- */
+/* ---- recompensa diária + streak de login ----
+   A partir daqui, enquanto autenticado, o Supabase é a AUTORIDADE sobre
+   "já resgatei a recompensa de hoje?" — persistent.daily continua existindo
+   (cache local / modo offline sem login), mas nunca é a fonte de verdade
+   quando há conta logada: ela é sobrescrita pelo que o servidor confirma
+   em dailySyncFromCloud() (no login/reload) e em claimDailyReward() (ao
+   resgatar), nunca o contrário. */
 function canClaimDailyToday(){ return persistent.daily.lastClaimDate !== todayKey(); }
 function getNextClaimDay(){
   var d = persistent.daily;
@@ -2886,13 +3347,126 @@ function getNextClaimDay(){
   if(diff===1) return (d.cycleDay>=7) ? 1 : (d.cycleDay||0)+1;
   return 1;
 }
+
+// No login/reload: pergunta ao Supabase qual foi a ÚLTIMA recompensa diária
+// realmente registrada para esta conta (em qualquer dispositivo) e alinha o
+// cache local a ela. Assim, se a recompensa de hoje já foi resgatada no
+// Chrome, abrir o jogo no Edge/celular já mostra "resgatado" sem precisar
+// clicar em nada — o navegador nunca decide isso sozinho.
+async function dailySyncFromCloud(){
+  if(!authUser || !supabaseClient) return;
+  try{
+    var res = await supabaseClient
+      .from('daily_claims')
+      .select('claim_key,cycle_day,streak')
+      .eq('player_id', authUser.id)
+      .order('claim_key', { ascending:false })
+      .limit(50); // ordenação lexicográfica de claim_key não é 100% cronológica com dias sem zero à esquerda; resolvido abaixo
+    if(res.error || !res.data || !res.data.length) return;
+    // claim_key usa o mesmo formato de todayKey() ("AAAA-M-D", sem zero à esquerda),
+    // então a ordenação lexicográfica do Postgres pode não bater com a ordem real
+    // das datas (ex.: "2026-9-2" vs "2026-10-1") — por segurança, resolve a mais
+    // recente comparando como data de verdade aqui no cliente.
+    var latest = res.data.reduce(function(best, row){
+      if(!best) return row;
+      return (parseDateKey(row.claim_key) > parseDateKey(best.claim_key)) ? row : best;
+    }, null);
+    if(!latest) return;
+    persistent.daily.lastClaimDate = latest.claim_key;
+    persistent.daily.cycleDay = latest.cycle_day;
+    persistent.daily.streak = latest.streak;
+    if(latest.streak > (persistent.records.bestLoginStreak||0)) persistent.records.bestLoginStreak = latest.streak;
+    savePersistent();
+    updateEngagementUI();
+    if(document.getElementById('modal-overlay').classList.contains('active') && document.getElementById('modal-daily').style.display==='block') renderDailyModal();
+  }catch(e){ console.warn('Falha ao sincronizar recompensa diária', e); }
+}
+
+/* ---- recordes e conquistas: mesma lógica de "nuvem é a fonte de verdade"
+   usada acima na recompensa diária. Recordes são valores "melhor de sempre"
+   (nunca diminuem) e conquistas são um conjunto que só cresce — por isso o
+   merge entre local e nuvem é sempre "pegar o maior"/"unir os conjuntos",
+   nunca uma substituição simples, então nenhum dispositivo perde progresso
+   do outro. A escrita em si (o que realmente fica salvo) é sempre decidida
+   dentro do Postgres, nunca aceitando um valor arbitrário vindo do cliente
+   sem comparação com o que já existia. */
+async function recordsSyncFromCloud(){
+  if(!authUser || !supabaseClient) return;
+  try{
+    var r = persistent.records;
+    var payload = {
+      bestNetWorth: r.bestNetWorth||0, mostDays: r.mostDays||0, bestStreak: r.bestStreak||0,
+      wins: r.wins||0, bankruptcies: r.bankruptcies||0, bestDailyIncome: r.bestDailyIncome||0,
+      bestBusinessIncome: r.bestBusinessIncome||0, bestBusinessName: r.bestBusinessName||'—',
+      bestBusinessId: r.bestBusinessId||'', bestLoginStreak: r.bestLoginStreak||0,
+      biggestBet: r.biggestBet||0, biggestInvestment: r.biggestInvestment||0,
+      mostBusinesses: r.mostBusinesses||0, duelWins: r.duelWins||0, duelLosses: r.duelLosses||0
+    };
+    var res = await supabaseClient.rpc('sync_player_records', { p_record: payload });
+    if(res.error){ console.warn('Falha ao sincronizar recordes', res.error); return; }
+    var m = res.data;
+    if(!m) return;
+    persistent.records.bestNetWorth = m.best_net_worth;
+    persistent.records.mostDays = m.most_days;
+    persistent.records.bestStreak = m.best_streak;
+    persistent.records.wins = m.wins;
+    persistent.records.bankruptcies = m.bankruptcies;
+    persistent.records.bestDailyIncome = m.best_daily_income;
+    persistent.records.bestBusinessIncome = m.best_business_income;
+    persistent.records.bestBusinessName = m.best_business_name;
+    persistent.records.bestBusinessId = m.best_business_id;
+    persistent.records.bestLoginStreak = m.best_login_streak;
+    persistent.records.biggestBet = m.biggest_bet;
+    persistent.records.biggestInvestment = m.biggest_investment;
+    persistent.records.mostBusinesses = m.most_businesses;
+    persistent.records.duelWins = m.duel_wins;
+    persistent.records.duelLosses = m.duel_losses;
+    savePersistent();
+    if(document.getElementById('screen-records') && document.getElementById('screen-records').classList.contains('active')) openRecordsScreen();
+  }catch(e){ console.warn('Erro ao sincronizar recordes', e); }
+}
+
+// No login: une as conquistas já desbloqueadas neste dispositivo com as que
+// já constam na conta (em qualquer outro dispositivo) — uma conquista nunca
+// "some" nem é duplicada, e qualquer conquista só local ainda é enviada.
+async function achievementsSyncFromCloud(){
+  if(!authUser || !supabaseClient) return;
+  try{
+    var res = await supabaseClient.from('player_achievements').select('achievement_id').eq('player_id', authUser.id);
+    if(res.error) return;
+    var cloudIds = (res.data||[]).map(function(row){ return row.achievement_id; });
+    var localIds = persistent.achievements||[];
+    var toPush = localIds.filter(function(id){ return cloudIds.indexOf(id)===-1; });
+    for(var i=0;i<toPush.length;i++){ await achievementPushToCloud(toPush[i]); }
+    var merged = localIds.slice();
+    cloudIds.forEach(function(id){ if(merged.indexOf(id)===-1) merged.push(id); });
+    persistent.achievements = merged;
+    savePersistent();
+    if(document.getElementById('screen-achievements') && document.getElementById('screen-achievements').classList.contains('active')) openAchievementsScreen();
+  }catch(e){ console.warn('Erro ao sincronizar conquistas', e); }
+}
+
+// Envia UMA conquista recém-desbloqueada para a conta (RPC idempotente —
+// chamar de novo para a mesma conquista não duplica nem dá erro).
+async function achievementPushToCloud(achievementId){
+  if(!authUser || !supabaseClient) return;
+  try{ await supabaseClient.rpc('unlock_achievement', { p_achievement_id: achievementId }); }
+  catch(e){ console.warn('Falha ao sincronizar conquista', achievementId, e); }
+}
+
 function claimDailyReward(){
   if(!canClaimDailyToday()){ toast(t('Você já resgatou a recompensa de hoje. Volte amanhã!')); return; }
+  if(authUser && supabaseReady()){ claimDailyRewardOnline(); return; }
+  claimDailyRewardLocal(getNextClaimDay());
+}
+
+// Aplica de fato a recompensa (cash/buffs) e a UI local — usada tanto pelo
+// caminho offline quanto pelo caminho online, DEPOIS que o servidor (quando
+// há conta logada) já confirmou que esta é uma concessão válida e nova.
+function claimDailyRewardLocal(nextDay, streakOverride, claimKeyOverride){
   var d = persistent.daily;
-  var today = todayKey();
-  var diff = d.lastClaimDate ? daysBetween(d.lastClaimDate, today) : null;
-  var nextDay = getNextClaimDay();
-  d.streak = (diff===1) ? (d.streak||0)+1 : 1;
+  var today = claimKeyOverride || todayKey();
+  d.streak = (typeof streakOverride==='number') ? streakOverride : ((d.lastClaimDate && daysBetween(d.lastClaimDate, today)===1) ? (d.streak||0)+1 : 1);
   d.cycleDay = nextDay;
   d.lastClaimDate = today;
   if(d.streak > (persistent.records.bestLoginStreak||0)){
@@ -2910,6 +3484,40 @@ function claimDailyReward(){
   refreshMenuButtons();
   updateEngagementUI();
   if(state) updateUI();
+}
+
+// Caminho ONLINE: o servidor decide se pode conceder (RPC claim_daily_reward,
+// SECURITY DEFINER, com UNIQUE(player_id, claim_key) no banco) — o navegador
+// só aplica a recompensa localmente DEPOIS de receber granted:true. Se outra
+// aba/dispositivo já resgatou, a RPC devolve already_claimed:true e nada é
+// concedido de novo aqui.
+async function claimDailyRewardOnline(){
+  var today = todayKey();
+  try{
+    var res = await supabaseClient.rpc('claim_daily_reward', { p_claim_key: today });
+    if(res.error){
+      toast('⚠️ '+(res.error.message || t('Não foi possível resgatar a recompensa agora.')));
+      return;
+    }
+    var data = res.data;
+    if(!data) return;
+    if(data.already_claimed){
+      // outra aba/dispositivo chegou primeiro — só alinha o cache local, sem conceder de novo.
+      persistent.daily.lastClaimDate = today;
+      persistent.daily.cycleDay = data.cycle_day;
+      persistent.daily.streak = data.streak;
+      savePersistent();
+      renderDailyModal(); updateEngagementUI();
+      toast(t('Você já resgatou a recompensa de hoje. Volte amanhã!'));
+      return;
+    }
+    if(data.granted){
+      claimDailyRewardLocal(data.cycle_day, data.streak, today);
+    }
+  }catch(e){
+    console.warn('Erro ao resgatar recompensa diária online', e);
+    toast('⚠️ '+t('Não foi possível resgatar a recompensa agora.'));
+  }
 }
 function openDailyModal(){ renderDailyModal(); openModal('modal-daily'); }
 function renderDailyModal(){
@@ -3082,37 +3690,7 @@ function updateEngagementUI(){
   }
 }
 
-/* ===================== DESAFIO 1V1 (V1.7) ===================== */
-var pendingDuelOpponent = null;
-
-function encodeDuelCode(obj){
-  try{ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/=+$/,''); }catch(e){ return ''; }
-}
-function decodeDuelCode(code){
-  try{
-    code = (code||'').trim().replace(/\s+/g,'');
-    if(!code) return null;
-    var pad = code.length % 4; if(pad) code += '='.repeat(4-pad);
-    var obj = JSON.parse(decodeURIComponent(escape(atob(code))));
-    if(typeof obj.n!=='string' || typeof obj.w!=='number' || typeof obj.d!=='number') return null;
-    return obj;
-  }catch(e){ return null; }
-}
-
-function goToDuelScreen(){
-  var block = document.getElementById('duel-last-code-block');
-  if(persistent.lastChallengeCode){
-    block.style.display='block';
-    document.getElementById('duel-last-code').textContent = persistent.lastChallengeCode;
-  } else { block.style.display='none'; }
-  var input = document.getElementById('duel-code-input');
-  if(input) input.value='';
-  document.getElementById('duel-preview').style.display='none';
-  document.getElementById('duel-accept-btn').style.display='none';
-  pendingDuelOpponent = null;
-  showScreen('screen-duel');
-}
-
+/* ===================== COMPARTILHAMENTO DE CÓDIGO (trocas) ===================== */
 function copyDuelCode(elId){
   var el = document.getElementById(elId);
   var text = el ? el.textContent : '';
@@ -3122,103 +3700,557 @@ function copyDuelCode(elId){
   } else { toast('📋 '+t('Copie o código manualmente.')); }
 }
 
-function previewDuelCode(){
-  var raw = document.getElementById('duel-code-input').value;
-  var obj = decodeDuelCode(raw);
-  var prev = document.getElementById('duel-preview');
-  var acceptBtn = document.getElementById('duel-accept-btn');
-  prev.style.display='block';
-  if(!obj){
-    prev.innerHTML = '<p class="modal-sub" style="color:var(--red); text-align:center;">'+t('Código inválido. Verifique e tente novamente.')+'</p>';
-    acceptBtn.style.display='none';
-    pendingDuelOpponent = null;
+/* ================= MULTIPLAYER 1V1 — MATCHMAKING (FASE 1) =================
+   Infra inicial: fila de matchmaking + criação de partida (matches) via Supabase.
+   Não altera autenticação, inventário, drops, mercado, GRB nem a lógica de
+   batalha/turnos existente. Ações simultâneas serão sincronizadas na Fase 2. */
+var mpMatchId = null;
+var mpQueueRowId = null;
+var mpPollTimer = null;
+var mpMatchChannel = null;
+var mpSearching = false;
+
+function openMultiplayerScreen(){
+  if(!supabaseReady()) return;
+  if(!authUser){ toast('⚠️ '+t('Você precisa estar logado para jogar multiplayer.')); return; }
+  document.getElementById('mp-idle-block').style.display = '';
+  document.getElementById('mp-searching-block').style.display = 'none';
+  document.getElementById('mp-found-block').style.display = 'none';
+  showScreen('screen-mp');
+  mpRefreshRankingDisplay();
+}
+
+/* ================= MULTIPLAYER 1V1 — RANKING (FASE 5) =================
+   Rating estilo ELO calculado 100% no servidor (RPC mp_apply_match_ranking,
+   SECURITY DEFINER). O navegador nunca escreve rating/vitórias/derrotas
+   diretamente — só lê (tabela rankings, RLS "cada um só vê o próprio") ou
+   pede ao Postgres para aplicar o resultado de UMA partida já finalizada,
+   o que a própria função só faz uma vez (trava em matches.ranking_applied). */
+async function mpRefreshRankingDisplay(){
+  if(!supabaseClient || !authUser) return;
+  try{
+    var res = await supabaseClient.from('rankings').select('*').eq('player_id', authUser.id).maybeSingle();
+    var row = (!res.error && res.data) ? res.data : { rating:1000, wins:0, losses:0, matches_played:0 };
+    document.getElementById('mp-rank-rating').textContent = Math.round(row.rating||1000).toLocaleString('pt-BR');
+    document.getElementById('mp-rank-wins').textContent = row.wins||0;
+    document.getElementById('mp-rank-losses').textContent = row.losses||0;
+    document.getElementById('mp-rank-matches').textContent = t('Partidas: ')+(row.matches_played||0);
+  }catch(e){ console.warn('Erro ao carregar ranking', e); }
+}
+
+// Chamada ao final de qualquer partida com vencedor definido (vitória normal,
+// derrota normal ou desfecho por abandono/desconexão). O resultado exibido
+// vem sempre da resposta do servidor, nunca calculado no navegador.
+async function mpApplyMatchRanking(matchId, won){
+  if(!supabaseReady() || !matchId) return;
+  try{
+    var res = await supabaseClient.rpc('mp_apply_match_ranking', { p_match_id: matchId });
+    if(res.error){ console.warn('Ranking não aplicado', res.error); return; }
+    var data = res.data;
+    if(!data || data.applied===false) return;
+    var before = data.rating_before, after = data.rating_after;
+    var block = document.getElementById('mp-battle-rank-block');
+    var transitionEl = document.getElementById('mp-battle-rank-transition');
+    var deltaEl = document.getElementById('mp-battle-rank-delta');
+    if(typeof before==='number' && typeof after==='number'){
+      var delta = after - before;
+      transitionEl.textContent = t('Rating: ')+before+' → '+after;
+      deltaEl.textContent = (delta>=0? '+':'')+delta+' '+t('Rating');
+      deltaEl.style.color = delta>=0 ? 'var(--green)' : 'var(--red)';
+      block.style.display = '';
+      if(delta>0){ BattleAudio.play('rankUp', 'match:'+matchId+':rankup'); }
+    }
+    mpRefreshRankingDisplay();
+  }catch(e){ console.warn('Erro ao aplicar ranking da partida', e); }
+}
+
+function mpLeaveScreen(){
+  mpCancelSearch();
+  goToMenu();
+}
+
+async function mpStartSearch(){
+  if(!supabaseReady() || !authUser) return;
+  if(mpSearching) return;
+  mpSearching = true;
+  BattleAudio.play('queueStart');
+  document.getElementById('mp-idle-block').style.display = 'none';
+  document.getElementById('mp-searching-block').style.display = '';
+  document.getElementById('mp-found-block').style.display = 'none';
+
+  try{
+    // remove eventuais entradas antigas do próprio jogador na fila
+    await supabaseClient.from('matchmaking_queue').delete().eq('player_id', authUser.id);
+
+    // tenta pegar alguém que já esteja esperando (o mais antigo primeiro)
+    var waitingRes = await supabaseClient
+      .from('matchmaking_queue')
+      .select('id, player_id')
+      .neq('player_id', authUser.id)
+      .order('created_at', { ascending:true })
+      .limit(1);
+
+    if(waitingRes.error) throw waitingRes.error;
+
+    if(waitingRes.data && waitingRes.data.length){
+      var opponent = waitingRes.data[0];
+      // tenta remover o oponente da fila; se conseguir, o "slot" era nosso -> criamos a partida
+      var claim = await supabaseClient.from('matchmaking_queue').delete().eq('id', opponent.id).select();
+      if(!claim.error && claim.data && claim.data.length){
+        var matchRes = await supabaseClient.from('matches').insert({
+          player_1: opponent.player_id,
+          player_2: authUser.id,
+          status: 'active',
+          started_at: new Date().toISOString()
+        }).select().maybeSingle();
+        if(matchRes.error) throw matchRes.error;
+        mpOnMatchFound(matchRes.data.id);
+        return;
+      }
+      // se não conseguiu (outro jogador levou primeiro), cai para entrar na fila normalmente
+    }
+
+    // ninguém disponível: entra na fila e aguarda alguém nos encontrar via realtime
+    var insertRes = await supabaseClient.from('matchmaking_queue').insert({ player_id: authUser.id }).select().maybeSingle();
+    if(insertRes.error) throw insertRes.error;
+    mpQueueRowId = insertRes.data.id;
+
+    mpSubscribeToIncomingMatch();
+    // fallback por polling, caso o realtime não esteja disponível/habilitado
+    mpPollTimer = setInterval(mpPollForMatch, 2500);
+  }catch(e){
+    console.warn('Erro no matchmaking', e);
+    toast('⚠️ '+t('Não foi possível buscar batalha agora. Tente novamente.'));
+    mpResetSearchUI();
+  }
+}
+
+function mpSubscribeToIncomingMatch(){
+  if(!supabaseClient || !authUser) return;
+  mpMatchChannel = supabaseClient
+    .channel('mp-incoming-'+authUser.id)
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'matches', filter:'player_2=eq.'+authUser.id }, function(payload){
+      mpOnMatchFound(payload.new.id);
+    })
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'matches', filter:'player_1=eq.'+authUser.id }, function(payload){
+      mpOnMatchFound(payload.new.id);
+    })
+    .subscribe();
+}
+
+async function mpPollForMatch(){
+  if(!mpSearching || !authUser || !supabaseClient) return;
+  try{
+    var res = await supabaseClient
+      .from('matches')
+      .select('id, player_1, player_2, status')
+      .or('player_1.eq.'+authUser.id+',player_2.eq.'+authUser.id)
+      .eq('status','active')
+      .order('created_at', { ascending:false })
+      .limit(1);
+    if(!res.error && res.data && res.data.length){
+      mpOnMatchFound(res.data[0].id);
+    }
+  }catch(e){ /* silencioso — apenas fallback de polling */ }
+}
+
+function mpOnMatchFound(matchId){
+  if(!mpSearching) return; // já tratado
+  mpSearching = false;
+  mpMatchId = matchId;
+  if(mpPollTimer){ clearInterval(mpPollTimer); mpPollTimer = null; }
+  if(mpMatchChannel){ supabaseClient.removeChannel(mpMatchChannel); mpMatchChannel = null; }
+
+  document.getElementById('mp-searching-block').style.display = 'none';
+  document.getElementById('mp-found-block').style.display = '';
+  BattleAudio.resetMatch();
+  BattleAudio.play('opponentFound'); vibrate('win');
+
+  setTimeout(function(){ mpEnterBattle(matchId); }, 1400);
+}
+
+/* ---------------------------------------------------------------------
+   BATALHA MULTIPLAYER SINCRONIZADA (FASE 2)
+   Reaproveita EXATAMENTE as regras de risco já existentes no jogo
+   (RISK_TIERS: pct/chance/mult) — aqui aplicadas simultaneamente aos
+   dois jogadores, resolvidas 100% no servidor via RPC (SECURITY DEFINER
+   no Supabase). O navegador apenas envia "qual é a minha ação" através
+   de mpChooseAction(); quem decide o resultado é o Postgres.
+   As ações ficam ocultas do adversário até a resolução porque a tabela
+   match_actions só permite a cada jogador ler as PRÓPRIAS linhas (RLS).
+--------------------------------------------------------------------- */
+var mpBattleMatchId = null;
+var mpBattleChannel = null;
+var mpBattleRow = null;
+var mpMySlot = null; // 'p1' ou 'p2'
+var mpHeartbeatTimer = null;
+var mpDisconnectCheckTimer = null;
+var mpActionLocked = false;
+
+function mpEnterBattle(matchId){
+  mpBattleMatchId = matchId;
+  mpActionLocked = false;
+  document.getElementById('mp-battle-actions-block').style.display = '';
+  document.getElementById('mp-battle-waiting-block').style.display = 'none';
+  document.getElementById('mp-battle-result-block').style.display = 'none';
+  document.getElementById('mp-battle-end-block').style.display = 'none';
+  document.getElementById('mp-disconnect-block').style.display = 'none';
+  mpSetConnBanner(null);
+  mpRenderActionButtons();
+  showScreen('screen-mp-battle');
+  BattleAudio.play('battleStart', 'match:'+matchId+':start');
+  BattleMusicSys.start();
+  mpSubscribeBattle(matchId);
+  mpFetchBattleState(matchId);
+  mpStartHeartbeat(matchId);
+}
+
+/* Ao carregar/relogar: se o jogador ainda participa de uma partida ATIVA
+   (ex.: queda momentânea de conexão, app fechado sem sair da batalha),
+   restaura automaticamente a tela de batalha com o estado oficial atual.
+   Partidas finished/cancelled nunca são reabertas — a própria consulta
+   já filtra por status='active'. */
+async function mpTryReconnect(){
+  if(!supabaseClient || !authUser) return;
+  try{
+    var res = await supabaseClient
+      .from('matches')
+      .select('*')
+      .or('player_1.eq.'+authUser.id+',player_2.eq.'+authUser.id)
+      .eq('status','active')
+      .order('started_at', { ascending:false })
+      .limit(1);
+    if(!res.error && res.data && res.data.length){
+      toast('✓ '+t('CONEXÃO RESTABELECIDA'));
+      mpEnterBattle(res.data[0].id);
+    }
+  }catch(e){ /* silencioso — apenas tentativa de reconexão */ }
+}
+
+function mpSetConnBanner(kind){
+  var el = document.getElementById('mp-conn-banner');
+  if(!el) return;
+  if(!kind){ el.style.display = 'none'; return; }
+  if(kind==='lost'){
+    el.style.display = ''; el.style.background = 'rgba(232,75,75,.14)'; el.style.color = 'var(--red)';
+    el.textContent = '⚠️ ' + t('CONEXÃO PERDIDA') + ' — ' + t('tentando reconectar...');
+  } else if(kind==='restored'){
+    el.style.display = ''; el.style.background = 'rgba(61,214,140,.14)'; el.style.color = 'var(--green)';
+    el.textContent = '✓ ' + t('CONEXÃO RESTABELECIDA');
+    setTimeout(function(){ if(document.getElementById('mp-conn-banner').textContent.indexOf('RESTABELECIDA')>=0) mpSetConnBanner(null); }, 2500);
+  }
+}
+
+function mpRenderActionButtons(){
+  var list = document.getElementById('mp-battle-action-list');
+  var html = '';
+  RISK_TIERS.forEach(function(tier, idx){
+    var isSpecial = idx === RISK_TIERS.length-1; // ação de maior risco = "ação especial"
+    html += '<div class="risk-card risk-'+tier.id+'"><div class="risk-head">'+tier.icon+' '+t(tier.label)+'</div>'
+         +  '<div class="risk-body">'+t('Chance: ')+Math.round(tier.chance*100)+t('% · Aposta: ')+Math.round(tier.pct*100)+t('% do caixa · Prêmio: x')+tier.mult+'</div>'
+         +  '<button class="btn btn-primary btn-sm" onclick="mpSelectAction(\''+tier.id+'\','+isSpecial+')">'+t('Escolher')+'</button></div>';
+  });
+  list.innerHTML = html;
+}
+
+// Som de seleção (ao tocar no botão) + confirmação, antes de enviar a ação ao servidor.
+function mpSelectAction(tierId, isSpecial){
+  BattleAudio.play(isSpecial ? 'special' : 'selectMine');
+  mpChooseAction(tierId);
+}
+
+async function mpFetchBattleState(matchId){
+  if(!supabaseClient) return;
+  try{
+    var res = await supabaseClient.from('matches').select('*').eq('id', matchId).maybeSingle();
+    if(!res.error && res.data) mpApplyBattleRow(res.data);
+  }catch(e){ console.warn('Erro ao buscar estado da partida', e); }
+}
+
+function mpSubscribeBattle(matchId){
+  if(!supabaseClient) return;
+  mpBattleChannel = supabaseClient
+    .channel('match-battle-'+matchId)
+    .on('postgres_changes', { event:'UPDATE', schema:'public', table:'matches', filter:'id=eq.'+matchId }, function(payload){
+      mpApplyBattleRow(payload.new);
+    })
+    .subscribe();
+}
+
+function mpApplyBattleRow(row){
+  mpBattleRow = row;
+  if(!mpMySlot && authUser){
+    mpMySlot = (row.player_1 === authUser.id) ? 'p1' : (row.player_2 === authUser.id ? 'p2' : null);
+  }
+  if(!mpMySlot) return;
+  var mine   = mpMySlot==='p1' ? row.p1_cash : row.p2_cash;
+  var opp    = mpMySlot==='p1' ? row.p2_cash : row.p1_cash;
+  var myRdy  = mpMySlot==='p1' ? row.p1_ready : row.p2_ready;
+  var oppRdy = mpMySlot==='p1' ? row.p2_ready : row.p1_ready;
+
+  document.getElementById('mp-my-cash').textContent = formatMoney(mine||0);
+  document.getElementById('mp-opp-cash').textContent = formatMoney(opp||0);
+  document.getElementById('mp-round-pill').textContent = t('RODADA ')+(row.round||1);
+
+  if(row.status==='finished' || row.status==='cancelled'){
+    mpShowBattleEnd(row);
     return;
   }
-  pendingDuelOpponent = obj;
-  prev.innerHTML = '<div class="mission-row"><div class="mr-head"><span>⚔️ '+t('DESAFIO DE ')+(obj.n||'?').toUpperCase()+'</span></div>'
-    + '<div class="mr-desc">💰 '+t('Patrimônio: ')+formatMoney(obj.w)+'</div>'
-    + '<div class="mr-desc">📅 '+t('Dias: ')+obj.d+'</div></div>';
-  acceptBtn.style.display='block';
-}
 
-function startDuelCreate(){
-  function go(){
-    state = newGameState();
-    state.gameMode = 'classic';
-    state.duel = { role:'creator' };
-    applyPendingBonusIfAny();
-    saveGame(); lastLossReason=null;
-    routeToDuelIntro();
+  if(row.last_round_result){
+    mpShowRoundResult(row.last_round_result);
   }
-  if(hasSave()){ showConfirm(t('Iniciar um novo jogo apagará seu progresso atual. Deseja continuar?'), go); }
-  else { go(); }
-}
 
-function startDuelAccept(){
-  if(!pendingDuelOpponent) return;
-  var opp = pendingDuelOpponent;
-  function go(){
-    state = newGameState();
-    state.gameMode = 'classic';
-    state.duel = { role:'challenger', opponentName:opp.n, opponentNetWorth:opp.w, opponentDays:opp.d };
-    applyPendingBonusIfAny();
-    saveGame(); lastLossReason=null;
-    routeToDuelIntro();
-  }
-  if(hasSave()){ showConfirm(t('Iniciar um novo jogo apagará seu progresso atual. Deseja continuar?'), go); }
-  else { go(); }
-}
-
-function routeToDuelIntro(){
-  if(!persistent.profile.name){ nameScreenReturnTo='screen-intro'; showNameScreen(); }
-  else { updateIntroGreeting(); showScreen('screen-intro'); }
-}
-
-function handleDuelGameEnd(){
-  if(!state.duel) return;
-  var nw = netWorth();
-  if(state.duel.role==='creator'){
-    var code = encodeDuelCode({ n:(playerName()||t('Jogador')), w:nw, d:state.day });
-    state.duel.code = code;
-    persistent.lastChallengeCode = code;
-    savePersistent();
-    saveGame();
-    showDuelShareBlock(code);
-  } else if(state.duel.role==='challenger'){
-    showDuelCompareResult(nw);
+  if(myRdy){
+    mpActionLocked = true;
+    document.getElementById('mp-battle-actions-block').style.display = 'none';
+    document.getElementById('mp-battle-waiting-block').style.display = '';
+    if(oppRdy){
+      document.getElementById('mp-battle-waiting-title').textContent = t('RESOLVENDO RODADA...');
+      document.getElementById('mp-battle-waiting-sub').textContent = '';
+      BattleAudio.play('revealOpp', 'match:'+row.id+':round:'+(row.round||1)+':reveal');
+      BattleAudio.play('resolving', 'match:'+row.id+':round:'+(row.round||1)+':resolving');
+    } else {
+      document.getElementById('mp-battle-waiting-title').textContent = t('✓ AÇÃO CONFIRMADA');
+      document.getElementById('mp-battle-waiting-sub').textContent = t('Aguardando adversário...');
+    }
+  } else {
+    mpActionLocked = false;
+    document.getElementById('mp-battle-actions-block').style.display = '';
+    document.getElementById('mp-battle-waiting-block').style.display = 'none';
   }
 }
 
-function showDuelShareBlock(code){
-  ['duel-code-victory','duel-code-bankruptcy'].forEach(function(id){
-    var codeEl = document.getElementById(id);
-    if(!codeEl) return;
-    codeEl.textContent = code;
-    var box = codeEl.closest('.duel-share-block');
-    if(box) box.style.display='block';
-  });
+function mpShowRoundResult(result){
+  if(!result || !mpMySlot) return;
+  var box = document.getElementById('mp-battle-result-block');
+  var mine = mpMySlot==='p1' ? result.p1 : result.p2;
+  var opp  = mpMySlot==='p1' ? result.p2 : result.p1;
+  if(!mine || !opp) return;
+  var mineTier = RISK_TIERS.filter(function(x){return x.id===mine.action;})[0];
+  var oppTier  = RISK_TIERS.filter(function(x){return x.id===opp.action;})[0];
+  var html = '<div style="margin-bottom:8px;"><strong>'+t('Você: ')+'</strong>'+t(mine.win?'Ganhou':'Perdeu')+' ('+(mineTier?mineTier.icon:'')+' '+t(mine.win? '+'+formatMoney(mine.delta) : formatMoney(mine.delta))+')</div>'
+     + '<div><strong>'+t('Adversário: ')+'</strong>'+t(opp.win?'Ganhou':'Perdeu')+' ('+(oppTier?oppTier.icon:'')+' '+t(opp.win? '+'+formatMoney(opp.delta) : formatMoney(opp.delta))+')</div>';
+  document.getElementById('mp-battle-result-text').innerHTML = html;
+  box.style.display = '';
+  var roundKey = 'match:'+(mpBattleMatchId||'')+':round:'+(mpBattleRow?mpBattleRow.round:0)+':result';
+  BattleAudio.play(mine.win?'roundWin':'roundLose', roundKey);
+  BattleAudio.play(mine.win?'hit':'damage', roundKey+':impact');
+  vibrate(mine.win?'gain':'loss');
 }
 
-function showDuelCompareResult(myNetWorth){
-  var d = state.duel;
-  var won = myNetWorth > d.opponentNetWorth;
-  var tie = myNetWorth === d.opponentNetWorth;
-  if(!tie){
-    if(won) persistent.records.duelWins = (persistent.records.duelWins||0)+1;
-    else persistent.records.duelLosses = (persistent.records.duelLosses||0)+1;
-    savePersistent();
+function mpShowBattleEnd(row){
+  mpStopHeartbeat();
+  if(mpBattleChannel && supabaseClient){ supabaseClient.removeChannel(mpBattleChannel); mpBattleChannel = null; }
+  document.getElementById('mp-battle-actions-block').style.display = 'none';
+  document.getElementById('mp-battle-waiting-block').style.display = 'none';
+  mpSetConnBanner(null);
+  var endBlock = document.getElementById('mp-battle-end-block');
+  var iconEl = document.getElementById('mp-battle-end-icon');
+  var titleEl = document.getElementById('mp-battle-end-title');
+  var subEl = document.getElementById('mp-battle-end-sub');
+  var rewardBlock = document.getElementById('mp-battle-reward-block');
+  rewardBlock.style.display = 'none';
+  document.getElementById('mp-battle-rank-block').style.display = 'none';
+  subEl.textContent = '';
+  if(row.status==='cancelled'){
+    iconEl.textContent = '⚠️'; titleEl.textContent = t('PARTIDA CANCELADA');
+    BattleMusicSys.stop();
+  } else {
+    var won = row.winner && authUser && row.winner===authUser.id;
+    var abandonWin = won && (row.end_reason==='abandoned' || row.end_reason==='disconnected');
+    var endKey = 'match:'+row.id+':end';
+    if(abandonWin){
+      iconEl.textContent = '🏆';
+      titleEl.textContent = t('VITÓRIA POR ABANDONO');
+      BattleAudio.play('disconnectWin', endKey);
+    } else {
+      iconEl.textContent = won ? '🏆' : '💀';
+      titleEl.textContent = won ? t('VITÓRIA!') : t('DERROTA');
+      subEl.textContent = won ? '' : t('Boa sorte na próxima batalha.');
+      BattleAudio.play(won?'victory':'defeat', endKey);
+    }
+    BattleMusicSys.stop();
+    vibrate(won?'win':'loss');
+    if(won){ mpClaimMatchReward(row.id); }
+    mpApplyMatchRanking(row.id, won);
   }
-  closeModal();
-  var iconEl = document.getElementById('duel-result-icon');
-  iconEl.textContent = tie ? '🤝' : (won ? '🏆' : '💀');
-  var titleEl = document.getElementById('duel-result-title');
-  var titleText = tie ? 'EMPATE' : (won ? 'VOCÊ VENCEU!' : 'VOCÊ PERDEU');
-  titleEl.setAttribute('data-pt', titleText); titleEl.textContent = t(titleText);
-  var meLine = (won?'<strong style="color:var(--gold);">':'')+t('Você')+' — '+formatMoney(myNetWorth)+(won?'</strong>':'');
-  var oppLine = (!won && !tie?'<strong style="color:var(--gold);">':'')+(d.opponentName||'?')+' — '+formatMoney(d.opponentNetWorth)+(!won && !tie?'</strong>':'');
-  document.getElementById('duel-result-lines').innerHTML = oppLine+'<br>'+meLine;
-  playSound(tie?'click':(won?'win':'lose')); vibrate(won?'win':'lose');
-  openModal('modal-duel-result');
+  endBlock.style.display = '';
+}
+
+// A recompensa só aparece na tela DEPOIS que o servidor confirma que
+// concedeu (ou já havia concedido) GRB/XP — o navegador nunca assume o
+// resultado sozinho, apenas pergunta ao Supabase o que realmente aconteceu.
+async function mpClaimMatchReward(matchId){
+  if(!supabaseReady() || !matchId) return;
+  try{
+    var res = await supabaseClient.rpc('mp_claim_match_reward', { p_match_id: matchId });
+    if(res.error){ console.warn('Recompensa não concedida', res.error); return; }
+    var data = res.data;
+    if(data && data.granted){
+      document.getElementById('mp-battle-reward-grb').textContent = '+'+data.grb_awarded+' GRB';
+      document.getElementById('mp-battle-reward-xp').textContent = '+'+data.xp_awarded+' XP';
+      document.getElementById('mp-battle-reward-block').style.display = '';
+      BattleAudio.play('reward', 'match:'+matchId+':reward');
+      vibrate('win');
+      refreshWalletAndInventoryFromCloud();
+      mpRefreshXpDisplay();
+    } else if(data && data.already_granted){
+      // já tinha sido concedida antes (ex.: reconexão) — apenas exibe os valores oficiais, sem conceder de novo
+      document.getElementById('mp-battle-reward-grb').textContent = '+'+data.grb_awarded+' GRB';
+      document.getElementById('mp-battle-reward-xp').textContent = '+'+data.xp_awarded+' XP';
+      document.getElementById('mp-battle-reward-block').style.display = '';
+    }
+  }catch(e){ console.warn('Erro ao reivindicar recompensa da partida', e); }
+}
+
+async function mpRefreshXpDisplay(){
+  if(!authUser || !supabaseClient) return;
+  try{
+    var res = await supabaseClient.from('players').select('xp').eq('id', authUser.id).maybeSingle();
+    if(!res.error && res.data && typeof res.data.xp === 'number'){
+      authPlayerRow = authPlayerRow ? Object.assign({}, authPlayerRow, { xp: res.data.xp }) : { xp: res.data.xp };
+    }
+  }catch(e){}
+}
+
+async function mpChooseAction(tierId){
+  if(!supabaseReady() || !authUser || !mpBattleMatchId) return;
+  if(mpActionLocked) return;
+  mpActionLocked = true;
+  try{
+    var res = await supabaseClient.rpc('mp_submit_action', { p_match_id: mpBattleMatchId, p_action: tierId });
+    if(res.error){
+      mpActionLocked = false;
+      toast('⚠️ '+(res.error.message || t('Não foi possível confirmar a ação.')));
+      return;
+    }
+    document.getElementById('mp-battle-actions-block').style.display = 'none';
+    document.getElementById('mp-battle-waiting-block').style.display = '';
+    document.getElementById('mp-battle-waiting-title').textContent = t('✓ AÇÃO CONFIRMADA');
+    document.getElementById('mp-battle-waiting-sub').textContent = t('Aguardando adversário...');
+    BattleAudio.play('confirmMine', 'match:'+mpBattleMatchId+':round:'+(mpBattleRow?mpBattleRow.round:0)+':confirm');
+    mpFetchBattleState(mpBattleMatchId);
+  }catch(e){
+    mpActionLocked = false;
+    console.warn('Erro ao confirmar ação', e);
+  }
+}
+
+var mpHeartbeatFailCount = 0;
+var mpConnLost = false;
+
+function mpStartHeartbeat(matchId){
+  mpStopHeartbeat();
+  mpHeartbeatFailCount = 0; mpConnLost = false;
+  mpSendHeartbeat(matchId);
+  mpHeartbeatTimer = setInterval(function(){ mpSendHeartbeat(matchId); }, 8000);
+  mpDisconnectCheckTimer = setInterval(mpCheckOpponentStale, 5000);
+  window.addEventListener('online', mpOnBrowserOnline);
+  window.addEventListener('offline', mpOnBrowserOffline);
+}
+
+function mpOnBrowserOffline(){ mpConnLost = true; mpSetConnBanner('lost'); }
+function mpOnBrowserOnline(){
+  if(mpConnLost){ mpConnLost = false; mpSetConnBanner('restored'); if(mpBattleMatchId) mpFetchBattleState(mpBattleMatchId); }
+}
+
+function mpStopHeartbeat(){
+  if(mpHeartbeatTimer){ clearInterval(mpHeartbeatTimer); mpHeartbeatTimer = null; }
+  if(mpDisconnectCheckTimer){ clearInterval(mpDisconnectCheckTimer); mpDisconnectCheckTimer = null; }
+  window.removeEventListener('online', mpOnBrowserOnline);
+  window.removeEventListener('offline', mpOnBrowserOffline);
+}
+
+async function mpSendHeartbeat(matchId){
+  if(!supabaseClient || !authUser) return;
+  try{
+    var res = await supabaseClient.rpc('mp_heartbeat', { p_match_id: matchId });
+    if(res.error) throw res.error;
+    mpHeartbeatFailCount = 0;
+    if(mpConnLost){ mpConnLost = false; mpSetConnBanner('restored'); mpFetchBattleState(matchId); }
+  }catch(e){
+    mpHeartbeatFailCount++;
+    if(mpHeartbeatFailCount>=2 && !mpConnLost){ mpConnLost = true; mpSetConnBanner('lost'); }
+  }
+}
+
+function mpCheckOpponentStale(){
+  if(!mpBattleRow || !mpMySlot) return;
+  var oppLastSeen = mpMySlot==='p1' ? mpBattleRow.p2_last_seen : mpBattleRow.p1_last_seen;
+  var block = document.getElementById('mp-disconnect-block');
+  if(!block) return;
+  if(mpBattleRow.status!=='active'){ block.style.display='none'; return; }
+  if(!oppLastSeen){ block.style.display='none'; return; }
+  var staleMs = Date.now() - new Date(oppLastSeen).getTime();
+  block.style.display = (staleMs > 20000) ? '' : 'none';
+}
+
+async function mpClaimDisconnectWin(){
+  if(!supabaseReady() || !mpBattleMatchId) return;
+  try{
+    var res = await supabaseClient.rpc('mp_claim_disconnect_win', { p_match_id: mpBattleMatchId });
+    if(res.error){ toast('⚠️ '+(res.error.message || t('Não foi possível reivindicar a vitória ainda.'))); return; }
+    mpFetchBattleState(mpBattleMatchId);
+  }catch(e){ console.warn('Erro ao reivindicar vitória', e); }
+}
+
+function mpConfirmAbandon(){
+  if(!mpBattleMatchId || !mpBattleRow || mpBattleRow.status!=='active'){ mpExitBattle(); return; }
+  showConfirm(t('Sair agora conta como derrota por abandono e seu adversário vencerá. Deseja sair?'), mpAbandonBattle);
+}
+
+async function mpAbandonBattle(){
+  if(!supabaseReady() || !mpBattleMatchId) return;
+  BattleAudio.play('abandon', 'match:'+mpBattleMatchId+':abandon');
+  try{ await supabaseClient.rpc('mp_abandon_match', { p_match_id: mpBattleMatchId }); }
+  catch(e){ console.warn('Erro ao abandonar partida', e); }
+  mpExitBattle();
+}
+
+// Melhor esforço: se o jogador fechar a aba/navegador durante uma partida
+// ativa, tenta avisar o servidor. Se não for entregue a tempo, o
+// heartbeat/mp_claim_disconnect_win do adversário garante o desfecho.
+window.addEventListener('beforeunload', function(){
+  if(mpBattleMatchId && mpBattleRow && mpBattleRow.status==='active' && supabaseClient && authUser){
+    try{
+      var url = SUPABASE_URL + '/rest/v1/rpc/mp_abandon_match';
+      var body = JSON.stringify({ p_match_id: mpBattleMatchId });
+      fetch(url, {
+        method:'POST', keepalive:true,
+        headers:{ 'Content-Type':'application/json', 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+(mpAuthToken||SUPABASE_ANON_KEY) },
+        body: body
+      });
+    }catch(e){}
+  }
+});
+
+function mpExitBattle(){
+  mpStopHeartbeat();
+  BattleMusicSys.stop();
+  if(mpBattleChannel && supabaseClient){ supabaseClient.removeChannel(mpBattleChannel); mpBattleChannel = null; }
+  mpBattleMatchId = null; mpBattleRow = null; mpMySlot = null; mpActionLocked = false;
+  goToMenu();
+}
+
+async function mpCancelSearch(){
+  var wasSearching = mpSearching;
+  mpSearching = false;
+  if(mpPollTimer){ clearInterval(mpPollTimer); mpPollTimer = null; }
+  if(mpMatchChannel && supabaseClient){ supabaseClient.removeChannel(mpMatchChannel); mpMatchChannel = null; }
+  if(wasSearching && authUser && supabaseClient){
+    try{ await supabaseClient.from('matchmaking_queue').delete().eq('player_id', authUser.id); }catch(e){}
+  }
+  mpResetSearchUI();
+}
+
+function mpResetSearchUI(){
+  var idle = document.getElementById('mp-idle-block');
+  var searching = document.getElementById('mp-searching-block');
+  var found = document.getElementById('mp-found-block');
+  if(idle) idle.style.display = '';
+  if(searching) searching.style.display = 'none';
+  if(found) found.style.display = 'none';
 }
 
 /* ===================== COLEÇÃO — RUNTIME (V1.8) ===================== */
@@ -3252,7 +4284,7 @@ function padSerial(n, supply){
 }
 
 function grantCollectible(itemId){
-  var item = itemId ? COLLECTIBLES_CATALOG.filter(function(it){ return it.id===itemId; })[0] : rollCollectible();
+  var item = itemId ? findCollectibleById(itemId) : rollCollectible();
   if(!item) return;
   var edition = currentEditionYear();
   var serial = item.supply ? rndInt(1, item.supply) : (persistent.collection.owned.filter(function(u){ return u.itemId===item.id && u.edition===edition; }).length+1);
@@ -3271,25 +4303,26 @@ function openCollectionScreen(){
   showScreen('screen-collection');
 }
 
-function renderCollectionGrid(){
-  var owned = persistent.collection.owned;
-  var ownedCount = 0;
+function renderCollectibleCardsInto(catalog, owned, closedBadge){
   var html = '';
-  COLLECTIBLES_CATALOG.forEach(function(item){
+  var ownedCount = 0;
+  var badgeHtml = closedBadge ? '<div class="rarity-badge" style="color:var(--red); background:rgba(232,75,75,.12); margin-top:3px;">🔴 '+t('DROP ENCERRADO')+'</div>' : '';
+  catalog.forEach(function(item){
     var units = owned.filter(function(u){ return u.itemId===item.id; });
     var rarity = RARITY_INFO[item.rarity];
     if(units.length){
       ownedCount++;
       var latest = units[units.length-1];
-      html += '<div class="ach-card coll-card" onclick="openCollectionItemModal(\''+item.id+'\')">'
+      html += '<div class="ach-card coll-card r-'+item.rarity+'" onclick="openCollectionItemModal(\''+item.id+'\')">'
            +  (units.length>1 ? '<div class="coll-count">x'+units.length+'</div>' : '')
            +  '<div class="ai">'+item.icon+'</div>'
            +  '<div class="an">'+t(item.name)+'</div>'
            +  '<div class="ad">'+t('Edição')+' '+latest.edition+'<br>#'+padSerial(latest.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div>'
            +  '<div class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</div>'
+           +  badgeHtml
            +  '</div>';
     } else {
-      html += '<div class="ach-card locked">'
+      html += '<div class="ach-card locked r-'+item.rarity+'">'
            +  '<div class="ai">❔</div>'
            +  '<div class="an">???</div>'
            +  '<div class="ad">'+t('Item não descoberto')+'</div>'
@@ -3297,12 +4330,35 @@ function renderCollectionGrid(){
            +  '</div>';
     }
   });
+  return { html: html, ownedCount: ownedCount };
+}
+
+function renderCollectionGrid(){
+  var owned = persistent.collection.owned;
+  var main = renderCollectibleCardsInto(COLLECTIBLES_CATALOG, owned, false);
+  var html = main.html;
+  var ownedCount = main.ownedCount;
+  var totalCount = COLLECTIBLES_CATALOG.length;
+
+  // Coleções de drop mensal (ex.: Drop Agosto/Setembro 2026) são exibidas em seção
+  // própria, sem se misturar ao catálogo principal, cada uma com seu status
+  // ativo/encerrado calculado automaticamente pela data real do sistema.
+  Object.keys(MONTHLY_DROPS).forEach(function(key){
+    var drop = MONTHLY_DROPS[key];
+    var active = isMonthlyDropActive(key);
+    var section = renderCollectibleCardsInto(drop.catalog, owned, !active);
+    html += '<div class="coll-summary" style="grid-column:1/-1; margin-top:18px;">'+monthlyDropStatusHtml(key)+'</div>';
+    html += section.html;
+    ownedCount += section.ownedCount;
+    totalCount += drop.catalog.length;
+  });
+
   document.getElementById('collection-grid').innerHTML = html;
-  document.getElementById('collection-summary').textContent = ownedCount+' / '+COLLECTIBLES_CATALOG.length+' '+t('itens descobertos');
+  document.getElementById('collection-summary').textContent = ownedCount+' / '+totalCount+' '+t('itens descobertos');
 }
 
 function openCollectionItemModal(itemId){
-  var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===itemId; })[0];
+  var item = findCollectibleById(itemId);
   if(!item) return;
   var units = persistent.collection.owned.filter(function(u){ return u.itemId===itemId; });
   if(!units.length) return;
@@ -3310,7 +4366,9 @@ function openCollectionItemModal(itemId){
   var html = '<div class="big-modal-icon">'+item.icon+'</div>';
   html += '<div class="big-modal-title">'+t(item.name)+'</div>';
   html += '<div style="text-align:center; margin-bottom:14px;"><span class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</span></div>';
-  html += '<div class="ach-grid">';
+  html += dropOriginHtml(item);
+  html += referencePriceHtml(item);
+  html += '<div class="ach-grid" style="margin-top:14px;">';
   units.forEach(function(u){
     html += '<div class="ach-card"><div class="ai">'+item.icon+'</div>'
          +  '<div class="an">'+t('Edição')+' '+u.edition+'</div>'
@@ -3366,11 +4424,13 @@ function addOwnedUnit(unit){
 function unitsMatch(a,b){ return !!(a && b && a.itemId===b.itemId && a.edition===b.edition && a.serial===b.serial); }
 
 function itemCardHtml(unit){
-  var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===unit.itemId; })[0];
+  var item = findCollectibleById(unit.itemId);
   if(!item) return '<div class="trade-item-card"><div class="ti-icon">❔</div><div class="ti-info"><div class="ti-name">'+t('Item desconhecido')+'</div></div></div>';
   var rarity = RARITY_INFO[item.rarity];
+  var dropKey = item.collection ? findMonthlyDropKeyForItem(item.id) : null;
+  var closedTag = (dropKey && !isMonthlyDropActive(dropKey)) ? ' <span style="color:var(--red); font-weight:800; font-size:10.5px;">🔴 '+t('DROP ENCERRADO')+'</span>' : '';
   return '<div class="trade-item-card"><div class="ti-icon">'+item.icon+'</div><div class="ti-info">'
-       + '<div class="ti-name">'+t(item.name)+' <span class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</span></div>'
+       + '<div class="ti-name">'+t(item.name)+' <span class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</span>'+closedTag+'</div>'
        + '<div class="ti-meta">'+t('Edição')+' '+unit.edition+' · #'+padSerial(unit.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div>'
        + '</div></div>';
 }
@@ -3387,10 +4447,10 @@ function openTradePicker(onPick){
   }
   html += '<div class="ach-grid">';
   owned.forEach(function(unit, idx){
-    var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===unit.itemId; })[0];
+    var item = findCollectibleById(unit.itemId);
     if(!item) return;
     var rarity = RARITY_INFO[item.rarity];
-    html += '<div class="ach-card trade-picker-item" onclick="pickTradeItem('+idx+')">'
+    html += '<div class="ach-card trade-picker-item r-'+item.rarity+'" onclick="pickTradeItem('+idx+')">'
          +  '<div class="ai">'+item.icon+'</div>'
          +  '<div class="an">'+t(item.name)+'</div>'
          +  '<div class="ad">'+t('Edição')+' '+unit.edition+'<br>#'+padSerial(unit.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div>'
@@ -3729,14 +4789,18 @@ function renderMarketScreen(){
 }
 
 function marketListingRowHtml(lst, actionHtml){
-  var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===lst.itemId; })[0];
+  var item = findCollectibleById(lst.itemId);
   if(!item) return '';
   var rarity = RARITY_INFO[item.rarity];
+  var dropKey = item.collection ? findMonthlyDropKeyForItem(item.id) : null;
+  var closedTag = (dropKey && !isMonthlyDropActive(dropKey)) ? ' <span style="color:var(--red); font-weight:800; font-size:10.5px;">🔴 '+t('DROP ENCERRADO')+'</span>' : '';
   return '<div class="market-listing">'
        +  '<div class="ml-icon">'+item.icon+'</div>'
-       +  '<div class="ml-info"><div class="ml-name">'+t(item.name)+' <span class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</span></div>'
+       +  '<div class="ml-info"><div class="ml-name">'+t(item.name)+' <span class="rarity-badge '+rarity.cls+'">'+rarity.icon+' '+t(rarity.label)+'</span>'+closedTag+'</div>'
        +  '<div class="ml-meta">'+t('Edição')+' '+lst.edition+' · #'+padSerial(lst.serial,item.supply)+(item.supply?'/'+item.supply:'')+'</div>'
-       +  '<div class="ml-price">🪙 '+formatGRB(lst.price)+' GRB</div></div>'
+       +  '<div class="ml-price">🪙 '+formatGRB(lst.price)+' GRB</div>'
+       +  priceVsReferenceHtml(lst.price, item)
+       +  '</div>'
        +  actionHtml
        +  '</div>';
 }
@@ -3791,7 +4855,7 @@ function renderMarketItemsTab(){
     html = '<div class="market-empty">'+t('Você ainda não possui itens colecionáveis.')+'</div>';
   } else {
     owned.forEach(function(unit, idx){
-      var item = COLLECTIBLES_CATALOG.filter(function(it){ return it.id===unit.itemId; })[0];
+      var item = findCollectibleById(unit.itemId);
       if(!item) return;
       var rarity = RARITY_INFO[item.rarity];
       html += '<div class="market-listing">'
@@ -3846,14 +4910,30 @@ function openSellPriceModal(idx){
   var unit = persistent.collection.owned[idx];
   if(!unit || !ownsUnit(unit)) return;
   marketSellUnit = unit;
+  var item = findCollectibleById(unit.itemId);
   var html = '<h2>'+t('Vender item')+'</h2>';
   html += itemCardHtml(unit);
+  html += referencePriceHtml(item);
   html += '<p class="modal-sub" style="margin:14px 0 8px; text-align:center;">'+t('Preço em GRB:')+'</p>';
-  html += '<input type="number" inputmode="numeric" min="1" step="1" id="market-sell-price" class="grb-input" placeholder="'+t('Ex: 50')+'">';
+  html += '<input type="number" inputmode="numeric" min="1" step="1" id="market-sell-price" class="grb-input" placeholder="'+t('Ex: 50')+'" oninput="updateSellPriceIndicator()">';
+  html += '<div id="market-sell-price-indicator"></div>';
   html += '<button class="btn btn-primary" style="margin-top:14px;" onclick="confirmSellListing()">🏷️ '+t('ANUNCIAR')+'</button>';
   html += '<button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal()">'+t('Cancelar')+'</button>';
   document.getElementById('modal-market-sell').innerHTML = html;
   openModal('modal-market-sell');
+}
+
+function updateSellPriceIndicator(){
+  var unit = marketSellUnit;
+  if(!unit) return;
+  var item = findCollectibleById(unit.itemId);
+  var input = document.getElementById('market-sell-price');
+  var box = document.getElementById('market-sell-price-indicator');
+  if(!input || !box) return;
+  var price = parseInt(input.value, 10);
+  if(!hasReferencePrice(item) || !price || price<=0){ box.innerHTML=''; return; }
+  var ind = priceVsReferenceIndicator(price, item);
+  box.innerHTML = ind ? '<div style="text-align:center; margin-top:6px; font-size:12.5px;">'+ind.emoji+' '+ind.label+'</div>' : '';
 }
 
 function confirmSellListing(){
@@ -3981,7 +5061,8 @@ function loadPersistent(){
       lastTradeCode: loaded.lastTradeCode || null,
       grb: (typeof loaded.grb==='number' && isFinite(loaded.grb)) ? loaded.grb : def.grb,
       marketListings: Array.isArray(loaded.marketListings) ? loaded.marketListings : [],
-      syncedAccountId: loaded.syncedAccountId || null
+      syncedAccountId: loaded.syncedAccountId || null,
+      monthlyDrop: Object.assign({}, def.monthlyDrop, loaded.monthlyDrop||{})
     };
   }catch(e){ persistent = defaultPersistent(); }
 }
@@ -4015,6 +5096,7 @@ function ensureAudio(){
   }
   if(audioCtx && audioCtx.state==='suspended'){ try{ audioCtx.resume(); }catch(e){} }
 }
+function sfxVol(){ return (persistent && persistent.settings.sfxVolume!=null) ? persistent.settings.sfxVolume : 0.8; }
 function tone(freq,dur,type){
   if(!audioCtx) return;
   try{
@@ -4022,7 +5104,7 @@ function tone(freq,dur,type){
     var gain = audioCtx.createGain();
     osc.type = type; osc.frequency.value = freq;
     gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.22*sfxVol(), audioCtx.currentTime+0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime+dur+0.02);
@@ -4242,6 +5324,8 @@ var MusicSys = (function(){
     }
   }
 
+  function musicVol(){ return (persistent && persistent.settings.musicVolume!=null) ? persistent.settings.musicVolume : 0.8; }
+
   function start(){
     if(playing || !ensureCtx()) return;
     playing = true;
@@ -4249,10 +5333,12 @@ var MusicSys = (function(){
     barIndex = 0;
     master.gain.cancelScheduledValues(mctx.currentTime);
     master.gain.setValueAtTime(master.gain.value, mctx.currentTime);
-    master.gain.linearRampToValueAtTime(1, mctx.currentTime+2.5);
+    master.gain.linearRampToValueAtTime(musicVol(), mctx.currentTime+2.5);
     scheduleNext();
     schedulerTimer = setInterval(scheduleNext, lookahead*1000);
   }
+
+  function refreshVolume(){ if(master && mctx && playing){ master.gain.setTargetAtTime(musicVol(), mctx.currentTime, 0.2); } }
 
   function stop(){
     if(!playing) return;
@@ -4270,10 +5356,221 @@ var MusicSys = (function(){
   document.addEventListener('visibilitychange', function(){
     if(!playing) return;
     if(document.hidden){ if(master && mctx){ master.gain.setTargetAtTime(0.0001, mctx.currentTime, 0.3); } }
-    else if(persistent && persistent.settings.music){ master.gain.setTargetAtTime(1, mctx.currentTime, 0.8); }
+    else if(persistent && persistent.settings.music){ master.gain.setTargetAtTime(musicVol(), mctx.currentTime, 0.8); }
   });
 
-  return { start:start, stop:stop, setEnabled:setEnabled };
+  return { start:start, stop:stop, setEnabled:setEnabled, refreshVolume:refreshVolume };
+})();
+
+/* ===================== ÁUDIO DE BATALHA MULTIPLAYER (1V1) — 100% autoral, Web Audio API =====================
+   Identidade sonora própria para as batalhas multiplayer 1v1: um efeito curto e reconhecível para cada
+   ação/evento, tocando por cima da trilha de batalha (que fica em segundo plano). Nada aqui usa amostras,
+   arquivos externos ou trechos de obras de terceiros — tudo é sintetizado em tempo real. Um controle de
+   "evento já tocado por partida" evita sons duplicados causados por reconexão do Supabase Realtime,
+   múltiplos listeners ou re-render da UI: cada evento real da batalha soa só uma vez. */
+var BattleAudio = (function(){
+  var actx = null, sfxGain = null;
+  var fired = {}; // dedupe de eventos já tocados na partida atual
+
+  function ensureCtx(){
+    if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ actx=null; } }
+    if(actx && actx.state==='suspended'){ try{ actx.resume(); }catch(e){} }
+    if(actx && !sfxGain){ sfxGain = actx.createGain(); sfxGain.gain.value = sfxVol(); sfxGain.connect(actx.destination); }
+    return actx;
+  }
+
+  // Chamado ao entrar em uma nova partida, para permitir que os mesmos tipos de evento
+  // (ex.: "rodada resolvida") voltem a soar na rodada seguinte, mas nunca duas vezes para o MESMO evento real.
+  function resetMatch(){ fired = {}; }
+
+  function once(key, fn){
+    if(!key){ fn(); return; }
+    if(fired[key]) return;
+    fired[key] = true;
+    fn();
+  }
+
+  function osc(type, freq, start, dur, peak){
+    if(!actx) return;
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, start);
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak*sfxVol(),0.0001), start+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+    o.connect(g); g.connect(sfxGain);
+    o.start(start); o.stop(start+dur+0.03);
+  }
+
+  function sweep(type, f1, f2, start, dur, peak){
+    if(!actx) return;
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f1, start);
+    o.frequency.exponentialRampToValueAtTime(f2, start+dur);
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak*sfxVol(),0.0001), start+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+    o.connect(g); g.connect(sfxGain);
+    o.start(start); o.stop(start+dur+0.03);
+  }
+
+  function noiseHit(start, dur, peak, filterFreq, filterType){
+    if(!actx) return;
+    var size = Math.max(Math.floor(actx.sampleRate*dur), 64);
+    var buf = actx.createBuffer(1, size, actx.sampleRate);
+    var data = buf.getChannelData(0);
+    for(var i=0;i<data.length;i++){ data[i] = (Math.random()*2-1) * (1-i/data.length); }
+    var src = actx.createBufferSource(); src.buffer = buf;
+    var f = actx.createBiquadFilter(); f.type = filterType||'bandpass'; f.frequency.value = filterFreq||2000;
+    var g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.linearRampToValueAtTime(Math.max(peak*sfxVol(),0.0001), start+0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+    src.connect(f); f.connect(g); g.connect(sfxGain);
+    src.start(start);
+  }
+
+  // ---------- Biblioteca de efeitos — cada ação tem uma assinatura sonora própria ----------
+  var FX = {
+    queueStart:    function(t){ sweep('triangle', 220, 440, t, 0.18, 0.16); },
+    opponentFound: function(t){ osc('square', 523.25, t, 0.10, 0.18); osc('square', 783.99, t+0.09, 0.14, 0.18); },
+    battleStart:   function(t){ sweep('sawtooth', 110, 55, t, 0.35, 0.20); noiseHit(t, 0.25, 0.12, 900, 'lowpass'); },
+    selectMine:    function(t){ osc('square', 660, t, 0.05, 0.14); },
+    confirmMine:   function(t){ osc('square', 880, t, 0.08, 0.16); osc('square', 1108, t+0.06, 0.10, 0.12); },
+    revealOpp:     function(t){ osc('triangle', 392, t, 0.06, 0.11); osc('sine', 349.23, t+0.04, 0.10, 0.12); },
+    resolving:     function(t){ noiseHit(t, 0.16, 0.06, 1500, 'highpass'); },
+    hit:           function(t){ sweep('square', 300, 900, t, 0.12, 0.18); noiseHit(t, 0.08, 0.14, 3000, 'bandpass'); },
+    block:         function(t){ noiseHit(t, 0.12, 0.16, 500, 'lowpass'); osc('square', 150, t, 0.10, 0.14); },
+    damage:        function(t){ sweep('sawtooth', 500, 120, t, 0.22, 0.18); },
+    special:       function(t){ sweep('sawtooth', 220, 1400, t, 0.28, 0.20); noiseHit(t+0.05, 0.20, 0.14, 4000, 'highpass'); },
+    roundWin:      function(t){ osc('triangle', 659.25, t, 0.14, 0.16); osc('triangle', 987.77, t+0.10, 0.18, 0.16); },
+    roundLose:     function(t){ osc('sawtooth', 220, t, 0.20, 0.16); osc('sawtooth', 164.81, t+0.14, 0.24, 0.14); },
+    victory:       function(t){ [523.25,659.25,783.99,1046.50].forEach(function(f,i){ osc('triangle', f, t+i*0.11, 0.30, 0.18); }); noiseHit(t, 0.4, 0.10, 2500, 'highpass'); },
+    defeat:        function(t){ [392,329.63,261.63,196].forEach(function(f,i){ osc('sawtooth', f, t+i*0.16, 0.35, 0.14); }); },
+    disconnectWin: function(t){ osc('square', 880, t, 0.10, 0.16); sweep('triangle', 660, 1320, t+0.08, 0.22, 0.16); },
+    abandon:       function(t){ sweep('sawtooth', 400, 90, t, 0.30, 0.14); },
+    rankUp:        function(t){ [784,988,1175].forEach(function(f,i){ osc('sine', f, t+i*0.08, 0.16, 0.14); }); },
+    reward:        function(t){ osc('triangle', 1046.50, t, 0.10, 0.14); osc('triangle', 1318.51, t+0.08, 0.14, 0.14); }
+  };
+
+  // dedupeKey: quando informado, garante que ESTE evento real só soe uma vez por partida
+  // (ex.: 'round:3:result', 'match:abc123:end') — reconexões/re-render não repetem o som.
+  function play(name, dedupeKey){
+    if(!persistent || !persistent.settings.sound) return;
+    ensureCtx();
+    if(!actx || !FX[name]) return;
+    var t = actx.currentTime + 0.008;
+    once(dedupeKey, function(){ FX[name](t); });
+  }
+
+  return { play: play, resetMatch: resetMatch };
+})();
+
+/* ===================== TRILHA DE BATALHA MULTIPLAYER (autoral, gerada por código — Web Audio API) =====================
+   Trilha eletrônica/cinematográfica exclusiva das batalhas 1v1: tom menor, tensão crescente, ritmo mais
+   acelerado que a música ambiente do menu, pensada para ficar em SEGUNDO PLANO (volume reduzido) e não
+   atrapalhar os efeitos das ações. Loop perfeito de 16 compassos, sem interrupção perceptível. Totalmente
+   original — nenhuma amostra ou melodia de terceiros é usada. */
+var BattleMusicSys = (function(){
+  var mctx=null, master=null, filt=null, playing=false, timer=null, nextBarTime=0, barIndex=0, noiseBuf=null;
+  var lookahead=0.25, scheduleAhead=2.0;
+  var BPM=132, BEAT=60/BPM, BAR=BEAT*4, STEP=BAR/8;
+  // Progressão tensa e autoral em Ré menor (i – bVI – bIII – IV).
+  var CHORDS = [
+    { notes:[146.83,174.61,220.00], root:73.42  }, // Dm
+    { notes:[116.54,146.83,174.61], root:58.27  }, // Bb
+    { notes:[130.81,164.81,196.00], root:65.41  }, // C
+    { notes:[174.61,220.00,261.63], root:87.31  }  // F (retorno com tensão)
+  ];
+
+  function getNoise(){
+    if(!noiseBuf){ var s=mctx.sampleRate; noiseBuf=mctx.createBuffer(1,s,mctx.sampleRate); var d=noiseBuf.getChannelData(0); for(var i=0;i<s;i++){ d[i]=Math.random()*2-1; } }
+    return noiseBuf;
+  }
+  function ensureCtx(){
+    if(!mctx){ try{ mctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ mctx=null; } }
+    if(mctx && mctx.state==='suspended'){ try{ mctx.resume(); }catch(e){} }
+    if(mctx && !master){
+      master=mctx.createGain(); master.gain.value=0;
+      filt=mctx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=2200; filt.Q.value=0.5;
+      master.connect(filt); filt.connect(mctx.destination);
+    }
+    return mctx;
+  }
+  function musicVol(){
+    var base = (persistent && persistent.settings.musicVolume!=null) ? persistent.settings.musicVolume : 0.8;
+    return base*0.5; // sempre em segundo plano, mesmo no volume máximo
+  }
+  function pulseKick(t){
+    var o=mctx.createOscillator(), g=mctx.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(40,t+0.12);
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.20,t+0.006); g.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+0.2);
+  }
+  function tickHat(t, accent){
+    var src=mctx.createBufferSource(); src.buffer=getNoise();
+    var hp=mctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=8000;
+    var g=mctx.createGain();
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(accent?0.05:0.025,t+0.003); g.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
+    src.connect(hp); hp.connect(g); g.connect(master); src.start(t); src.stop(t+0.05);
+  }
+  function tensePad(notes,t,dur){
+    notes.forEach(function(f){
+      var o=mctx.createOscillator(), g=mctx.createGain();
+      o.type='sawtooth'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.035,t+0.5); g.gain.linearRampToValueAtTime(0.0001,t+dur);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.2);
+    });
+  }
+  function pulseBass(freq,t,dur){
+    var o=mctx.createOscillator(), g=mctx.createGain();
+    o.type='square'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.07,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05);
+  }
+  function arp(freq,t,dur){
+    var o=mctx.createOscillator(), g=mctx.createGain();
+    o.type='square'; o.frequency.value=freq*2;
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.02,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05);
+  }
+  function scheduleNext(){
+    while(nextBarTime < mctx.currentTime + scheduleAhead){
+      var bar = barIndex % 16; // loop perfeito de 16 compassos (~29s a 132bpm)
+      var chord = CHORDS[Math.floor(bar/4)];
+      var intensity = Math.floor(bar/8); // tensão cresce ao longo do loop
+      tensePad(chord.notes, nextBarTime, BAR);
+      pulseBass(chord.root, nextBarTime+0*STEP, 0.30);
+      pulseBass(chord.root, nextBarTime+4*STEP, 0.30);
+      pulseKick(nextBarTime+0*STEP); pulseKick(nextBarTime+4*STEP);
+      for(var s=0;s<8;s++){ tickHat(nextBarTime+s*STEP, s%2===0); }
+      if(intensity>=1){
+        arp(chord.notes[bar%chord.notes.length], nextBarTime+2*STEP, 0.18);
+        arp(chord.notes[(bar+1)%chord.notes.length], nextBarTime+6*STEP, 0.18);
+      }
+      nextBarTime += BAR; barIndex++;
+    }
+  }
+  function start(){
+    if(playing || !ensureCtx()) return;
+    if(!(persistent && persistent.settings.music)) return;
+    playing = true; nextBarTime = mctx.currentTime+0.15; barIndex=0;
+    master.gain.cancelScheduledValues(mctx.currentTime);
+    master.gain.setValueAtTime(0.0001, mctx.currentTime);
+    master.gain.linearRampToValueAtTime(musicVol(), mctx.currentTime+1.2);
+    scheduleNext();
+    timer = setInterval(scheduleNext, lookahead*1000);
+  }
+  function stop(){
+    if(!playing) return; playing=false;
+    if(timer){ clearInterval(timer); timer=null; }
+    if(master && mctx){
+      master.gain.cancelScheduledValues(mctx.currentTime);
+      master.gain.setValueAtTime(master.gain.value, mctx.currentTime);
+      master.gain.linearRampToValueAtTime(0.0001, mctx.currentTime+0.8);
+    }
+  }
+  function refreshVolume(){ if(master && mctx && playing){ master.gain.setTargetAtTime(musicVol(), mctx.currentTime, 0.2); } }
+  return { start:start, stop:stop, refreshVolume:refreshVolume };
 })();
 
 /* ===================== VIBRATION ===================== */
@@ -4742,6 +6039,481 @@ grant execute on function public.buy_market_listing(bigint) to authenticated;
    disponível"), e o dinheiro/item só troca de dono se as duas pernas da
    operação (débito+crédito+transferência) forem confirmadas juntas dentro
    da mesma transação no Postgres.
+   ============================================================================ */
+
+/* ============================================================================
+   SUPABASE — RANKING MULTIPLAYER 1V1 (FASE 5 — rode depois de já ter a
+   tabela "matches" das Fases 1-4 criada no seu projeto)
+   ============================================================================
+   SQL — rode este bloco INTEIRO uma vez no SQL Editor do seu projeto Supabase.
+
+   O que este bloco cria: uma tabela nova (rankings) e uma função RPC
+   (SECURITY DEFINER) que é o ÚNICO jeito de alterar rating/vitórias/derrotas.
+   O navegador NUNCA escreve rating diretamente — ele só pode LER a própria
+   linha (RLS) ou chamar mp_apply_match_ranking(match_id), que recalcula tudo
+   dentro do Postgres a partir do resultado real já gravado em "matches"
+   (coluna winner), nunca a partir de um valor enviado pelo navegador.
+
+-- ---------------------------------------------------------------------------
+-- 1) Tabela de ranking — uma linha por jogador, rating inicial 1000.
+create table if not exists public.rankings (
+  player_id      uuid primary key references public.players(id) on delete cascade,
+  rating         integer not null default 1000 check (rating >= 0),
+  wins           integer not null default 0,
+  losses         integer not null default 0,
+  matches_played integer not null default 0,
+  updated_at     timestamptz not null default now()
+);
+
+alter table public.rankings enable row level security;
+
+-- Cada jogador só pode LER a própria linha de ranking (nunca a de outro,
+-- e nunca escrever nela diretamente — não existe policy de insert/update
+-- para o usuário comum; toda escrita passa pela função abaixo).
+create policy "rankings_select_own" on public.rankings
+  for select using (auth.uid() = player_id);
+
+-- ---------------------------------------------------------------------------
+-- 2) Colunas de controle na tabela "matches" (já existente das Fases 1-4):
+--    garantem que o ranking de uma partida só é aplicado UMA vez, e guardam
+--    o rating antes/depois de cada jogador para poder exibi-lo depois
+--    (inclusive em caso de reconexão, sem recalcular nada de novo).
+alter table public.matches add column if not exists ranking_applied  boolean not null default false;
+alter table public.matches add column if not exists p1_rating_before integer;
+alter table public.matches add column if not exists p1_rating_after  integer;
+alter table public.matches add column if not exists p2_rating_before integer;
+alter table public.matches add column if not exists p2_rating_after  integer;
+
+-- ---------------------------------------------------------------------------
+-- 3) Função segura (SECURITY DEFINER): aplica o resultado de ELO de UMA
+--    partida já finalizada (matches.status in ('finished','cancelled') e
+--    matches.winner preenchido — inclusive vitórias por abandono/desconexão,
+--    que já chegam com winner definido pelas RPCs das Fases 2-4).
+--    Trava a linha da partida (FOR UPDATE) para que, se os dois jogadores
+--    chamarem ao mesmo tempo, só a primeira chamada calcule o novo rating;
+--    a segunda apenas lê o resultado já gravado (ranking_applied = true).
+create or replace function public.mp_apply_match_ranking(p_match_id uuid)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_match record;
+  v_is_p1 boolean;
+  v_opponent uuid;
+  v_my_rating integer;
+  v_opp_rating integer;
+  v_my_score numeric;
+  v_opp_score numeric;
+  v_my_expected numeric;
+  v_opp_expected numeric;
+  v_my_new integer;
+  v_opp_new integer;
+  v_k integer := 32;
+  v_my_before integer;
+  v_my_after integer;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated';
+  end if;
+
+  select * into v_match from public.matches where id = p_match_id for update;
+  if v_match.id is null then
+    raise exception 'partida não encontrada';
+  end if;
+  if v_match.player_1 <> v_uid and v_match.player_2 <> v_uid then
+    raise exception 'você não participa desta partida';
+  end if;
+  if v_match.status not in ('finished','cancelled') then
+    raise exception 'partida ainda não terminou';
+  end if;
+
+  v_is_p1 := (v_match.player_1 = v_uid);
+  v_opponent := case when v_is_p1 then v_match.player_2 else v_match.player_1 end;
+
+  -- Já foi aplicado antes (ex.: adversário chamou primeiro, ou o próprio
+  -- jogador reconectou e a tela pediu de novo) — só devolve o que já
+  -- aconteceu, nunca recalcula.
+  if v_match.ranking_applied then
+    v_my_before := case when v_is_p1 then v_match.p1_rating_before else v_match.p2_rating_before end;
+    v_my_after  := case when v_is_p1 then v_match.p1_rating_after  else v_match.p2_rating_after  end;
+    return json_build_object(
+      'applied', true,
+      'already_applied', true,
+      'rating_before', v_my_before,
+      'rating_after', v_my_after,
+      'won', (v_match.winner = v_uid)
+    );
+  end if;
+
+  -- Partida cancelada sem um vencedor real (ex.: cancelada antes de começar)
+  -- não gera nenhuma variação de rating.
+  if v_match.winner is null then
+    update public.matches set ranking_applied = true where id = p_match_id;
+    return json_build_object('applied', false, 'reason', 'sem_vencedor');
+  end if;
+
+  insert into public.rankings (player_id) values (v_match.player_1) on conflict (player_id) do nothing;
+  insert into public.rankings (player_id) values (v_match.player_2) on conflict (player_id) do nothing;
+
+  select rating into v_my_rating  from public.rankings where player_id = v_uid       for update;
+  select rating into v_opp_rating from public.rankings where player_id = v_opponent  for update;
+
+  v_my_score  := case when v_match.winner = v_uid then 1 else 0 end;
+  v_opp_score := 1 - v_my_score;
+
+  -- Fórmula ELO padrão: quanto maior o rating do adversário em relação ao
+  -- meu, menor minha "expectativa" de vitória — e por isso vencer alguém
+  -- mais forte rende mais pontos, e perder para alguém mais fraco custa mais.
+  v_my_expected  := 1.0 / (1.0 + power(10, (v_opp_rating - v_my_rating) / 400.0));
+  v_opp_expected := 1.0 / (1.0 + power(10, (v_my_rating - v_opp_rating) / 400.0));
+
+  v_my_new  := greatest(0, round(v_my_rating  + v_k * (v_my_score  - v_my_expected)));
+  v_opp_new := greatest(0, round(v_opp_rating + v_k * (v_opp_score - v_opp_expected)));
+
+  update public.rankings set
+    rating = v_my_new,
+    wins = wins + (case when v_my_score=1 then 1 else 0 end),
+    losses = losses + (case when v_my_score=0 then 1 else 0 end),
+    matches_played = matches_played + 1,
+    updated_at = now()
+  where player_id = v_uid;
+
+  update public.rankings set
+    rating = v_opp_new,
+    wins = wins + (case when v_opp_score=1 then 1 else 0 end),
+    losses = losses + (case when v_opp_score=0 then 1 else 0 end),
+    matches_played = matches_played + 1,
+    updated_at = now()
+  where player_id = v_opponent;
+
+  if v_is_p1 then
+    update public.matches set
+      ranking_applied = true,
+      p1_rating_before = v_my_rating,  p1_rating_after = v_my_new,
+      p2_rating_before = v_opp_rating, p2_rating_after = v_opp_new
+    where id = p_match_id;
+  else
+    update public.matches set
+      ranking_applied = true,
+      p2_rating_before = v_my_rating,  p2_rating_after = v_my_new,
+      p1_rating_before = v_opp_rating, p1_rating_after = v_opp_new
+    where id = p_match_id;
+  end if;
+
+  return json_build_object(
+    'applied', true,
+    'already_applied', false,
+    'rating_before', v_my_rating,
+    'rating_after', v_my_new,
+    'won', (v_my_score = 1)
+  );
+end;
+$$;
+
+grant execute on function public.mp_apply_match_ranking(uuid) to authenticated;
+
+/* Resultado: rating inicial 1000 para todo jogador, cálculo estilo ELO
+   (vencer quem tem rating maior rende mais, perder para quem tem rating
+   menor custa mais) sempre calculado no Postgres a partir do resultado
+   real da partida, nunca a partir de um valor enviado pelo navegador —
+   e aplicado no máximo uma vez por partida, mesmo com reconexões ou
+   chamadas simultâneas dos dois jogadores.
+   ============================================================================ */
+
+/* ============================================================================
+   SUPABASE — RECOMPENSA DIÁRIA MULTIPLATAFORMA (CORREÇÃO)
+   ============================================================================
+   SQL — rode este bloco INTEIRO uma vez no SQL Editor do seu projeto Supabase.
+
+   PROBLEMA que resolve: antes, "já resgatei a recompensa de hoje?" só existia
+   em persistent.daily no localStorage — cada navegador/dispositivo tinha sua
+   própria resposta, então a mesma conta recebia a recompensa de novo em cada
+   um. A partir daqui, a resposta mora numa tabela no Postgres, e só é escrita
+   por uma função (SECURITY DEFINER) com uma restrição UNIQUE(player_id,
+   claim_key) — ou seja, mesmo duas abas/dispositivos chamando ao mesmo tempo,
+   o próprio banco garante que só uma delas consegue gravar a recompensa do
+   dia; a outra recebe de volta o registro que já existia, sem duplicar nada.
+
+-- ---------------------------------------------------------------------------
+-- 1) Tabela de recompensas diárias já resgatadas.
+--    claim_key usa o MESMO formato de todayKey() no jogo ("AAAA-M-D", sem
+--    zero à esquerda) — assim o dia "de hoje" do jogador é sempre o mesmo
+--    valor que o navegador já calculava, sem depender de fuso do servidor.
+create table if not exists public.daily_claims (
+  id          bigint generated always as identity primary key,
+  player_id   uuid not null references public.players(id) on delete cascade,
+  claim_key   text not null,
+  cycle_day   integer not null check (cycle_day between 1 and 7),
+  streak      integer not null check (streak >= 1),
+  claimed_at  timestamptz not null default now(),
+  unique (player_id, claim_key)
+);
+
+create index if not exists daily_claims_player_idx on public.daily_claims (player_id);
+
+alter table public.daily_claims enable row level security;
+
+-- O jogador só pode LER o próprio histórico. Não existe policy de
+-- insert/update/delete para o usuário comum — com RLS ligado e sem essas
+-- policies, qualquer escrita direta na tabela é recusada por padrão; toda
+-- gravação só acontece dentro da função abaixo.
+create policy "daily_claims_select_own" on public.daily_claims
+  for select using (auth.uid() = player_id);
+
+-- ---------------------------------------------------------------------------
+-- 2) Função segura (SECURITY DEFINER): único jeito de registrar uma
+--    recompensa diária como resgatada. Recebe apenas a "chave do dia" que o
+--    navegador já calcula localmente (p_claim_key) — nunca recebe nem aceita
+--    "streak" ou "dia do ciclo" vindos do cliente; esses dois são sempre
+--    recalculados aqui dentro a partir do histórico real gravado no banco.
+create or replace function public.claim_daily_reward(p_claim_key text)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_today date;
+  v_existing record;
+  v_last record;
+  v_diff integer;
+  v_cycle_day integer;
+  v_streak integer;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated';
+  end if;
+  if p_claim_key is null or length(p_claim_key) = 0 or length(p_claim_key) > 20 then
+    raise exception 'chave de data inválida';
+  end if;
+
+  begin
+    v_today := to_date(p_claim_key, 'FMYYYY-FMMM-FMDD');
+  exception when others then
+    raise exception 'formato de data inválido';
+  end;
+
+  -- Já resgatada hoje (por este ou qualquer outro dispositivo) — devolve o
+  -- que já foi concedido, sem conceder de novo. É esta checagem, dentro do
+  -- servidor, que impede a duplicação entre navegadores/dispositivos.
+  select * into v_existing from public.daily_claims where player_id = v_uid and claim_key = p_claim_key;
+  if found then
+    return json_build_object(
+      'granted', false, 'already_claimed', true,
+      'cycle_day', v_existing.cycle_day, 'streak', v_existing.streak
+    );
+  end if;
+
+  -- Última recompensa realmente registrada para esta conta (independente de
+  -- em qual dispositivo foi resgatada) — é a partir dela, e não de nada vindo
+  -- do navegador, que o dia do ciclo (1-7) e a sequência são recalculados.
+  select * into v_last from public.daily_claims
+   where player_id = v_uid
+   order by to_date(claim_key, 'FMYYYY-FMMM-FMDD') desc
+   limit 1;
+
+  if not found then
+    v_cycle_day := 1;
+    v_streak := 1;
+  else
+    v_diff := v_today - to_date(v_last.claim_key, 'FMYYYY-FMMM-FMDD');
+    if v_diff = 1 then
+      v_streak := v_last.streak + 1;
+      v_cycle_day := case when v_last.cycle_day >= 7 then 1 else v_last.cycle_day + 1 end;
+    else
+      v_streak := 1;
+      v_cycle_day := 1;
+    end if;
+  end if;
+
+  begin
+    insert into public.daily_claims (player_id, claim_key, cycle_day, streak)
+    values (v_uid, p_claim_key, v_cycle_day, v_streak);
+  exception when unique_violation then
+    -- Corrida entre duas abas/dispositivos chamando ao mesmo tempo: a outra
+    -- chegou primeiro e a restrição UNIQUE bloqueou esta segunda inserção —
+    -- devolve o que a primeira gravou, de forma 100% atômica (garantida pelo
+    -- próprio Postgres, não por uma checagem em duas etapas no JavaScript).
+    select * into v_existing from public.daily_claims where player_id = v_uid and claim_key = p_claim_key;
+    return json_build_object(
+      'granted', false, 'already_claimed', true,
+      'cycle_day', v_existing.cycle_day, 'streak', v_existing.streak
+    );
+  end;
+
+  return json_build_object(
+    'granted', true, 'already_claimed', false,
+    'cycle_day', v_cycle_day, 'streak', v_streak
+  );
+end;
+$$;
+
+grant execute on function public.claim_daily_reward(text) to authenticated;
+
+/* Resultado: uma mesma conta só recebe a recompensa diária de uma data (a
+   mesma "chave do dia" que o jogo já usa) UMA vez, não importa quantos
+   navegadores, dispositivos ou abas simultâneas tentem — a garantia vem da
+   restrição UNIQUE(player_id, claim_key) no Postgres, não de uma checagem
+   feita no navegador. streak e cycle_day continuam sendo os mesmos conceitos
+   já existentes no jogo (sequência de dias consecutivos / posição no ciclo
+   de 7 dias), só que agora recalculados a partir do histórico real no banco.
+   ============================================================================ */
+
+/* ============================================================================
+   SUPABASE — RECORDES E CONQUISTAS MULTIPLATAFORMA
+   ============================================================================
+   SQL — rode este bloco INTEIRO uma vez no SQL Editor do seu projeto Supabase.
+
+   Mesmo princípio da recompensa diária: a conta no Supabase passa a ser a
+   fonte de verdade, não o localStorage de cada dispositivo. A diferença é
+   que aqui NUNCA existe "duplicidade" a bloquear — recordes só sobem (regra
+   "fica o maior valor") e conquistas só se acumulam (regra "união de
+   conjuntos") — por isso a sincronização é sempre um MERGE nos dois sentidos
+   dentro do Postgres, tanto no login quanto após qualquer novo recorde ou
+   conquista, sem apagar o que outro dispositivo já tinha registrado.
+
+-- ---------------------------------------------------------------------------
+-- 1) Tabela de recordes — uma linha por jogador, com os mesmos campos que já
+--    existem em persistent.records no jogo.
+create table if not exists public.player_records (
+  player_id             uuid primary key references public.players(id) on delete cascade,
+  best_net_worth        bigint  not null default 100,
+  most_days             integer not null default 1,
+  best_streak           integer not null default 0,
+  wins                  integer not null default 0,
+  bankruptcies          integer not null default 0,
+  best_daily_income     bigint  not null default 0,
+  best_business_income  bigint  not null default 0,
+  best_business_name    text    not null default '—',
+  best_business_id      text    not null default '',
+  best_login_streak     integer not null default 0,
+  biggest_bet           bigint  not null default 0,
+  biggest_investment    bigint  not null default 0,
+  most_businesses       integer not null default 0,
+  duel_wins             integer not null default 0,
+  duel_losses           integer not null default 0,
+  updated_at            timestamptz not null default now()
+);
+
+alter table public.player_records enable row level security;
+
+-- O jogador só pode LER o próprio recorde. Não existe policy de
+-- insert/update/delete para o usuário comum — toda escrita passa pela
+-- função abaixo, que decide o que realmente fica salvo.
+create policy "player_records_select_own" on public.player_records
+  for select using (auth.uid() = player_id);
+
+-- ---------------------------------------------------------------------------
+-- 2) Tabela de conquistas desbloqueadas — um conjunto que só cresce.
+create table if not exists public.player_achievements (
+  player_id      uuid not null references public.players(id) on delete cascade,
+  achievement_id text not null,
+  unlocked_at    timestamptz not null default now(),
+  primary key (player_id, achievement_id)
+);
+
+alter table public.player_achievements enable row level security;
+
+create policy "player_achievements_select_own" on public.player_achievements
+  for select using (auth.uid() = player_id);
+
+-- ---------------------------------------------------------------------------
+-- 3) Função segura (SECURITY DEFINER): recebe o snapshot local de recordes
+--    (o mesmo objeto que já existe em persistent.records) e faz o MERGE
+--    "fica o maior valor" campo a campo dentro do Postgres — nunca aceita o
+--    valor do cliente cegamente, e nunca diminui um recorde já gravado.
+--    Devolve a linha final já mesclada, para o navegador adotar de volta.
+create or replace function public.sync_player_records(p_record jsonb)
+returns public.player_records
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_cap_money constant bigint := 1000000000000; -- limite de sanidade (1 trilhão) contra valores absurdos
+  v_cap_count constant integer := 1000000;       -- limite de sanidade para contadores/streaks
+  v_in_biz_income bigint;
+  v_row public.player_records;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated';
+  end if;
+
+  insert into public.player_records (player_id) values (v_uid) on conflict (player_id) do nothing;
+
+  v_in_biz_income := least(coalesce((p_record->>'bestBusinessIncome')::bigint, 0), v_cap_money);
+
+  update public.player_records set
+    best_net_worth       = greatest(best_net_worth,       least(coalesce((p_record->>'bestNetWorth')::bigint, 0), v_cap_money)),
+    most_days             = greatest(most_days,             least(coalesce((p_record->>'mostDays')::integer, 0), v_cap_count)),
+    best_streak           = greatest(best_streak,           least(coalesce((p_record->>'bestStreak')::integer, 0), v_cap_count)),
+    wins                  = greatest(wins,                  least(coalesce((p_record->>'wins')::integer, 0), v_cap_count)),
+    bankruptcies          = greatest(bankruptcies,          least(coalesce((p_record->>'bankruptcies')::integer, 0), v_cap_count)),
+    best_daily_income     = greatest(best_daily_income,     least(coalesce((p_record->>'bestDailyIncome')::bigint, 0), v_cap_money)),
+    best_login_streak     = greatest(best_login_streak,     least(coalesce((p_record->>'bestLoginStreak')::integer, 0), v_cap_count)),
+    biggest_bet           = greatest(biggest_bet,           least(coalesce((p_record->>'biggestBet')::bigint, 0), v_cap_money)),
+    biggest_investment    = greatest(biggest_investment,    least(coalesce((p_record->>'biggestInvestment')::bigint, 0), v_cap_money)),
+    most_businesses       = greatest(most_businesses,       least(coalesce((p_record->>'mostBusinesses')::integer, 0), v_cap_count)),
+    duel_wins             = greatest(duel_wins,             least(coalesce((p_record->>'duelWins')::integer, 0), v_cap_count)),
+    duel_losses           = greatest(duel_losses,           least(coalesce((p_record->>'duelLosses')::integer, 0), v_cap_count)),
+    -- melhor negócio: nome/id só mudam JUNTOS com a renda, e só quando a
+    -- renda recebida supera a já gravada (evita nome/id "descasados" da renda).
+    best_business_name   = case when v_in_biz_income > best_business_income
+                                  then left(coalesce(p_record->>'bestBusinessName','—'), 80)
+                                  else best_business_name end,
+    best_business_id     = case when v_in_biz_income > best_business_income
+                                  then left(coalesce(p_record->>'bestBusinessId',''), 40)
+                                  else best_business_id end,
+    best_business_income = greatest(best_business_income, v_in_biz_income),
+    updated_at = now()
+  where player_id = v_uid
+  returning * into v_row;
+
+  return v_row;
+end;
+$$;
+
+grant execute on function public.sync_player_records(jsonb) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 4) Função segura (SECURITY DEFINER): registra UMA conquista como
+--    desbloqueada para a conta. Idempotente — chamar de novo para a mesma
+--    conquista não duplica nem dá erro (ON CONFLICT DO NOTHING).
+create or replace function public.unlock_achievement(p_achievement_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'not authenticated';
+  end if;
+  if p_achievement_id is null or length(p_achievement_id) = 0 or length(p_achievement_id) > 40 then
+    raise exception 'achievement_id inválido';
+  end if;
+
+  insert into public.player_achievements (player_id, achievement_id)
+  values (v_uid, p_achievement_id)
+  on conflict (player_id, achievement_id) do nothing;
+end;
+$$;
+
+grant execute on function public.unlock_achievement(text) to authenticated;
+
+/* Resultado: os recordes e conquistas de uma conta passam a ser os mesmos em
+   qualquer navegador/dispositivo — cada sincronização faz um merge "fica o
+   maior"/"une os conjuntos" dentro do Postgres, então nenhum dispositivo
+   nunca sobrescreve ou apaga o progresso que outro dispositivo já tinha
+   registrado; o dado final sempre reflete o melhor de todos os aparelhos
+   usados pela conta.
    ============================================================================ */
 </script>
 </body>
